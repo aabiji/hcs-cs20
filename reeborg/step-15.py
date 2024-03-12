@@ -1,5 +1,13 @@
+"""
+Go around the grid, putting walls at the left if there's none.
+
+Author: Abigail Adegbiji
+Date: March 12
+"""
+
 import library as lib
 
+# Go to the left of the green square
 move()
 lib.turn_right()
 move()
