@@ -9,8 +9,7 @@ for i in range(12): # First "repeat"
         take()
         num_picked += 1
 
-turn_left()
-turn_left()
+lib.turn(2)
 lib.step(11) # Second repeat
 lib.discard(num_picked)
 move()

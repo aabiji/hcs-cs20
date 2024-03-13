@@ -15,3 +15,15 @@ def plant(num_steps):
 def discard(num_items):
     for i in range(num_items):
         put()
+
+def turn(num_times):
+    for i in range(num_times):
+        turn_left()
+
+def face_north():
+    while not is_facing_north():
+        turn_left()
+
+def move_to_wall():
+    while not wall_in_front():
+        move()

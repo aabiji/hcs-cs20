@@ -10,8 +10,7 @@ while not will_collide:
         num_picked += 1
     will_collide = wall_in_front()
 
-turn_left()
-turn_left()
+lib.turn(2)
 lib.step(12)
 lib.discard(num_picked)
 move()

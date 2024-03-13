@@ -15,8 +15,7 @@ turn_left()
 lib.move_to_wall()
 turn_left()
 lib.move_to_wall()
-lib.turn_left()
-lib.turn_left()
+lib.turn(2)
 
 # Move to wall, picking up flowers along the way
 num_picked = 0

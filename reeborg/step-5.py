@@ -4,8 +4,7 @@ def pick(facing_left):
     for i in range(2):
         move()
         take()
-    turn_left()
-    turn_left()
+    lib.turn(2)
     lib.step(2)
     lib.discard(2)
     if facing_left:
