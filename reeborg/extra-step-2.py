@@ -1,5 +1,6 @@
 """
 Solution for "Extra - Find the Centre 2"
+
 Find the geometric center of the grid.
 
 Author: Abigail Adegbiji
@@ -23,10 +24,10 @@ while not wall_in_front():
     move()
 
 lib.turn(2)
-
 # Go to center
 for y in range(height // 2):
     move()
+
 lib.turn_right()
 for x in range(width // 2):
     move()

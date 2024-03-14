@@ -1,12 +1,13 @@
 """
-Pick up all flowers in grid and depose them
+Solution for "Step 18"
+
+Pick up all flowers in the grid and depose them
 at the top right corner of the grid, before coming
 back to the bottom left corner of the grid.
 
 Author: Abigail Adegbiji
 Date: March 11
 """
-think(1)
 import library as lib
 
 # Go to bottom left corner (at the flag)
@@ -30,7 +31,7 @@ def stroll():
         else:
             move()
 
-# Picking flowers when going up
+# Pick flowers when going up,
 # move over, then move to the bottom wall
 while True:
     stroll()

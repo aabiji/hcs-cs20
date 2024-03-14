@@ -1,4 +1,6 @@
 """
+Solution for "Step 20"
+
 Same objective as step 15, going around and 
 putting walls at the right if there's none.
 This time though, the area isn't a grid.

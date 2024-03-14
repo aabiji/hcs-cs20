@@ -1,5 +1,6 @@
 """
 Solution for "Extra - Star Tower 1"
+
 Help Reeborg build a star tower by going in 3 rows,
 placing stars on the grid when x is uneven.
 
@@ -27,13 +28,16 @@ def place_star_row():
         move()
         x += 1
 
+    # Place a star if we ended
+    # on a uneven x position
     if is_even(x):
         put()
     grid_width = x
 
-for y in range(3):
+rows = 3
+for y in range(rows):
     place_star_row()
-    if is_even(y): # Wall's on right
+    if is_even(y): # Wall's on the right
         turn_left()
         move()
         turn_left()
