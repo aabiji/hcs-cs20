@@ -1,67 +1,69 @@
-# todo: explain and maybe refactor
+"""
+Temperature Conversion Assignment
+Author: Abigail Adegbiji
+Date: March 25
+
+Ask the user for a input choice (a to f, quit or q).
+If the user quits, print all the conversions from our history list and exit.
+Else, map that input choice to a unit we'll convert from and a unit we'll convert to.
+Use those from and to units to compute the converted temperature.
+Append the conversion to a history list. And print the conversion.
+"""
+
+HISTORY = []
+CELSIUS = "c"
+FAHRENHEIT = "f"
+KELVIN = "k"
 
 class Conversion:
-    def __init__(self, from_unit, to_unit, before, after):
+    def __init__(self, from_unit, to_unit, temperature):
         self.from_unit = from_unit
         self.to_unit = to_unit
-        self.before = before
-        self.after = after
+        self.before = temperature
+        self.after = 0
 
-history = []
+    def output(self):
+        print(f"{self.before} °{self.from_unit.upper()} = {self.after} °{self.to_unit.upper()}\n")
+
+    def convert(self):
+        if self.from_unit == FAHRENHEIT and self.to_unit == CELSIUS:
+            self.after = (self.before - 32) * (5 / 9)
+        elif self.from_unit == FAHRENHEIT and self.to_unit == KELVIN:
+            self.after = (self.before - 32) * (5 / 9) + 273.15
+
+        if self.from_unit == CELSIUS and self.to_unit == FAHRENHEIT:
+            self.after = (self.before * (9 / 5)) + 32
+        elif self.from_unit == CELSIUS and self.to_unit == KELVIN:
+            self.after = self.before + 273.15
+
+        if self.from_unit == KELVIN and self.to_unit == CELSIUS:
+            self.after = self.before - 273.15
+        elif self.from_unit == KELVIN and self.to_unit == FAHRENHEIT:
+            self.after = (self.before - 273.15) * (9 / 5) + 32
+
+
+# If the unit we are converting to in not kelvin, convert it on the fly
+def kelvin_convert(conversion):
+    conversion.convert(conversion.to_unit, KELVIN, conversion.after)
+    return conversion.after
+
 def log_history():
-    global history
-    if len(history) == 0:
+    global HISTORY
+    if len(HISTORY) == 0:
         print("You haven't converted anything")
-        return 
-
-    # Sort by kelvin temperature
-    to_kelvin = lambda h : convert(h.to_unit, "K", h.after)
-    history.sort(key=to_kelvin)
+        return
 
     print("\nYour conversions: ")
-    for h in history:
-        print(f"{h.before} °{h.from_unit} = {h.after} °{h.to_unit}")
-
-def get_conversion_units(input_choice):
-    if input_choice == "a":
-        return "C", "F"
-    elif input_choice == "b":
-        return "C", "K"
-
-    if input_choice == "c":
-        return "F", "C"
-    elif input_choice == "d":
-        return "F", "K"
-
-    if input_choice == "e":
-        return "K", "C"
-    elif input_choice == "f":
-        return "K", "F"
-
-def convert(from_unit, to_unit, value):
-    if from_unit == "F" and to_unit == "C":
-        return (value - 32) * (5/9)
-    elif from_unit == "F" and to_unit == "K":
-        return (value - 32) * (5/9) + 273.15
-
-    if from_unit == "C" and to_unit == "F":
-        return (value * (9/5)) + 32
-    elif from_unit == "C" and to_unit == "K":
-        return value + 273.15
-
-    if from_unit == "K" and to_unit == "C":
-        return value - 273.15
-    elif from_unit == "K" and to_unit == "F":
-        return (value - 273.15) * (9/5) + 32
-
-    return value
+    HISTORY.sort(key=kelvin_convert)
+    for conversion in HISTORY:
+        conversion.output()
 
 def is_too_cold(unit, temperature):
-    if unit == "K" and temperature < 0:
+    if unit == KELVIN and temperature < 0:
         return True
-    elif unit == "C" and temperature < -273.15:
+    elif unit == CELSIUS and temperature < -273.15:
         return True
-    elif unit == "F" and temperature < -459.67:
+    elif unit == FAHRENHEIT and temperature < -459.67:
         return True
     return False
 
@@ -76,35 +78,40 @@ def sanitize(user_input):
     return user_input.strip().lower()
 
 def run():
-    print("This is a temperature conversion program. Do you want to ...")
-    print("(a) Convert from Celcius to Farenheit?")
-    print("(b) Convert from Celcius to Kelvin?")
-    print("(c) Convert from Farenheit to Celcius?")
-    print("(d) Convert from Farenheit to Kelvin?")
-    print("(e) Convert from Kelvin to Celcius?")
-    print("(f) Convert from Kelvin to Farenheit?\n")
-
+    print("This is a temperature conversion program. Enter 'q', 'Q', or 'quit' at any time to quit.")
     while True:
-        msg = "Your choice (a, b, c, d, e, f, or quit): "
-        choice = sanitize(input(msg))
-        if choice == "q" or choice == "quit":
+        from_unit = sanitize(input("Which unit do you want to convert from: (C, F, K)? "))
+        if from_unit == "q" or from_unit == "quit":
             break
+        elif len(from_unit) > 1:
+            print("You need to enter C, F, or K.")
+            continue
 
-        temperature = input_num("Your temperature: ")
-        if temperature == -1:
+        to_unit = sanitize(input("Which unit do you want to convert to: (C, F, K)? "))
+        if to_unit == "q" or to_unit == "quit":
+            break
+        elif len(from_unit) > 1:
+            print("You need to enter C, F, or K.")
+            continue
+
+        temperature = 0
+        prompt = sanitize(input("Your temperature: "))
+        if prompt == "q" or prompt == "quit":
+            break
+        try:
+            temperature = float(prompt)
+        except:
             print("You need to need to enter a number.")
             continue 
 
-        from_unit, to_unit = get_conversion_units(choice)
         if is_too_cold(from_unit, temperature):
             print("That's too cold!")
             continue
 
-        converted = convert(from_unit, to_unit, temperature)
-        conversion = Conversion(from_unit, to_unit, temperature, converted)
-        history.append(conversion)
-
-        print(f"{temperature} °{from_unit} = {converted} °{to_unit}\n")
+        conversion = Conversion(from_unit, to_unit, temperature)
+        conversion.convert()
+        HISTORY.append(conversion)
+        conversion.output()
 
     log_history()
 
