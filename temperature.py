@@ -20,7 +20,7 @@ class Conversion:
         self.from_unit = from_unit
         self.to_unit = to_unit
         self.before = temperature
-        self.after = 0
+        self.after = temperature
 
     def output(self):
         print(f"{self.before} °{self.from_unit.upper()} = {self.after} °{self.to_unit.upper()}\n")
@@ -66,13 +66,6 @@ def is_too_cold(unit, temperature):
     elif unit == FAHRENHEIT and temperature < -459.67:
         return True
     return False
-
-def input_num(prompt):
-    value = input(prompt)
-    try:
-        return float(value)
-    except:
-        return -1 # Casting failed
 
 def sanitize(user_input):
     return user_input.strip().lower()
