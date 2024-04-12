@@ -1,6 +1,12 @@
+"""
+5.9 Turtle Assignment One - Drawing Shapes
+Abigail Adegbiji, April 12 2024
+"""
+
 import turtle
 
 """
+https://stackoverflow.com/questions/36964337/how-to-draw-smily-arc-using-python-turtle
 Must have author, pseudocode and inline comments
 Must clearly draw your first name using turtle in block letters
 Must successfully draw all objects including an exceptional object on the bottom right.  It must include one of the images from the attached document and must be drawn using functions with loops.
