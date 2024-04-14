@@ -1,8 +1,7 @@
 """
 5.9 Turtle Assignment One - Drawing Shapes
-Abigail Adegbiji, April 12 2024
+Abigail Adegbiji, April 15 2024
 
-Must successfully draw all objects including an exceptional object on the bottom right.
 Allows for the objects to be scaled larger or smaller based on user input from a GUI (Graphical User Interface - a window input)
 Allows for the user to determine the color of each object drawn immediately before drawing it, using input from a graphical window (not from command line)
 Includes at least 2 other creative or dynamic features. This does not mean you need another object but that could be something you choose to do.
@@ -30,19 +29,22 @@ def draw_square(t, angle, width, height):
         t.forward(length)
         t.left(90)
 
-# TODO: simplify this please
 def draw_triangle(t, angle, side_length, start_in_middle=False):
     t.setheading(angle)
-    initial_length = side_length
+
+    # Move halfway back
     if start_in_middle:
-        initial_length /= 2
-    t.forward(initial_length)
-    t.left(120)
-    for i in range(2):
+        t.left(180)
+        t.forward(side_length / 2)
+        t.left(180)
+
+    for i in range(3):
         t.forward(side_length)
         t.left(120)
+
+    # Move back to the center position
     if start_in_middle:
-        t.forward(initial_length)
+        t.forward(side_length / 2)
 
 # Draw a capital 'a' and return the width of the rendered letter
 def draw_a(t):
@@ -185,7 +187,7 @@ def draw_l(t):
 
     return outer_length
 
-def draw_name(name):
+def draw_text(text):
     # Map letters to drawing functions
     drawers = {
         "A": draw_a,
@@ -195,14 +197,39 @@ def draw_name(name):
         "L": draw_l,
     }
 
-    teleport(t, -300, -300)
-    x, y = t.xcor(), t.ycor()
-
     spacing = 20
-    for c in name:
+    x, y = t.xcor(), t.ycor()
+    for c in text:
         width = drawers[c.upper()](t)
         x += width + spacing
         teleport(t, x, y)
+
+# Draw an "exceptional" shape (tesselation)
+def draw_tesselation(t):
+    length = 20
+    num_sides = 8
+    right_angle = 90
+    center_x, center_y = t.xcor(), t.ycor()
+    turns = [270, 45, 135, 315, 90, 315, 135, 45]
+    for a in range(0, 360, 360 // num_sides):
+        teleport(t, center_x, center_y)
+
+        # Draw the inner "crest"
+        # Really it's composed of 8 squares connected 
+        # to lines oriented at different angles
+        t.setheading(a)
+        t.forward(length)
+        t.left(right_angle // 2)
+        for i in range(6):
+            t.forward(length)
+            t.right(right_angle)
+
+        # Draw the outer "crown" associated to the line
+        t.setheading(a)
+        t.forward(length + (length / 2))
+        for i, turn in enumerate(turns):
+            t.left(turn)
+            t.forward(length + (length / 5))
 
 def draw_shapes(t):
     teleport(t, -280, 200)
@@ -231,7 +258,11 @@ def draw_shapes(t):
     for a in angles:
         draw_square(t, a, width, height)
 
-    draw_name("Abigail")
+    teleport(t, 100, 0)
+    draw_tesselation(t)
+
+    teleport(t, -300, -300)
+    draw_text("Abigail")
 
     window.exitonclick()
 
@@ -241,7 +272,7 @@ window.bgcolor("black")
 
 t = turtle.Turtle()
 t.pensize(1)
-t.speed("slowest")
+t.speed("fastest")
 t.pencolor("white")
 
 draw_shapes(t)
