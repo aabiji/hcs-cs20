@@ -1,28 +1,15 @@
 """
 5.9 Turtle Assignment One - Drawing Shapes
 Abigail Adegbiji, April 12 2024
-"""
 
-import math
-import turtle
-
-"""
-Must have author, pseudocode and inline comments
 Must successfully draw all objects including an exceptional object on the bottom right.
-It must include one of the images from the attached document and must be drawn using functions with loops.
 Allows for the objects to be scaled larger or smaller based on user input from a GUI (Graphical User Interface - a window input)
 Allows for the user to determine the color of each object drawn immediately before drawing it, using input from a graphical window (not from command line)
 Includes at least 2 other creative or dynamic features. This does not mean you need another object but that could be something you choose to do.
 """
 
-window = turtle.Screen()
-window.setup(600, 600)
-window.bgcolor("black")
-
-t = turtle.Turtle()
-t.pensize(1)
-t.speed("slowest")
-t.pencolor("white")
+import math
+import turtle
 
 def teleport(t, x, y):
     t.penup()
@@ -30,7 +17,7 @@ def teleport(t, x, y):
     t.pendown()
 
 def draw_hexagon(t):
-    side_length = 100
+    side_length = 50
     angle = 360 // 6
     for i in range(6):
         t.forward(side_length)
@@ -43,6 +30,7 @@ def draw_square(t, angle, width, height):
         t.forward(length)
         t.left(90)
 
+# TODO: simplify this please
 def draw_triangle(t, angle, side_length, start_in_middle=False):
     t.setheading(angle)
     initial_length = side_length
@@ -110,7 +98,7 @@ def draw_b(t):
     t.forward(length)
 
     # Our "curves" are just circles rendered up to
-    # a certain angle. Here we drawe the bottom and top curves
+    # a certain angle. Here we drawe the bottom and top curves:
     teleport(t, x, y)
     t.setheading(-30)
     t.circle(bottom_radius, bottom_angle)
@@ -217,18 +205,27 @@ def draw_name(name):
         teleport(t, x, y)
 
 def draw_shapes(t):
-    # Draw hexagon
-    teleport(t, -300, 200)
+    teleport(t, -280, 200)
     draw_hexagon(t)
 
-    # Draw composite triangle
-    teleport(t, 0, 200)
+    # Draw composite triangle shape
+    # For each of the 10 triangles, we'll draw them at the
+    # different spots angled successively at (360 / 10) degrees
+    teleport(t, -80, 200)
     num_triangles = 10
     for i in range(0, 360, 360 // num_triangles):
-        draw_triangle(t, i, 100)
+        draw_triangle(t, i, 80)
 
-    # Draw squares
-    teleport(t, 300, 200)
+    # Draw star shape
+    # For each of the 5 triangles, we'll draw them at the
+    # same spot angled successively at (360 / 5) degrees
+    teleport(t, 120, 200)
+    num_triangles = 5
+    for i in range(0, 360, 360 // num_triangles):
+        draw_triangle(t, i, 80, True)
+
+    # Draw composite square shape by drawing squares at different angles
+    teleport(t, -200, 0)
     angles = [90, 0, 270, 180]
     width, height = 80, 40
     for a in angles:
@@ -237,5 +234,14 @@ def draw_shapes(t):
     draw_name("Abigail")
 
     window.exitonclick()
+
+window = turtle.Screen()
+window.setup(650, 650)
+window.bgcolor("black")
+
+t = turtle.Turtle()
+t.pensize(1)
+t.speed("slowest")
+t.pencolor("white")
 
 draw_shapes(t)
