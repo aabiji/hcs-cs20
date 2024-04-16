@@ -4,7 +4,6 @@ Abigail Adegbiji, April 15 2024
 
 Features:
 - Draw any text (a-z)
-- Input validation when inputting size and color
 """
 
 import math
@@ -92,12 +91,11 @@ def draw_a(t, length, color):
     return half_length * 2
 
 # Draw a capital 'b' and return the width of the rendered letter
-# TODO: properly scale this
 def draw_b(t, length, color):
-    hole_radius = length // 11
-    top_radius, top_angle = length / 4, 145
-    bottom_radius, bottom_angle = length / 3, 180
     x, y = t.xcor(), t.ycor()
+    top_radius = length / 4
+    bottom_radius = length / 3
+    hole_radius = length // 11
 
     t.pencolor(color)
 
@@ -109,14 +107,24 @@ def draw_b(t, length, color):
     # a certain angle. Here we draw the bottom and top curves:
     teleport(t, x, y)
     t.setheading(-30)
-    t.circle(bottom_radius, bottom_angle)
-    t.setheading(62)
-    t.circle(top_radius, top_angle)
+    t.circle(bottom_radius, 180)
+
+    ## Determine the tilt of the upper semi circle
+    # Since the radians stays the same anywhere on the circumference
+    # of the circle, we can get the center of the circle by subtracting the radius
+    cx, cy = t.xcor() - top_radius, t.ycor() + top_radius
+    # Next we can determine the angle from our current position to the center position
+    angle = math.atan2(t.ycor() - cy, t.xcor() - cx)
+    # Our "tilt" will now be the absolute angle in degrees
+    tilt = abs(math.degrees(angle))
+
+    t.setheading(tilt)
+    t.circle(top_radius, 180)
 
     # Draw inner holes
     teleport(t, x + 15, y + (length - 15))
     t.circle(hole_radius)
-    teleport(t, x + 20, y + 35)
+    teleport(t, x + top_radius * 2, y + (length - top_radius * 2))
     t.circle(hole_radius)
 
     return bottom_radius + top_radius
@@ -241,14 +249,24 @@ def draw_tesselation(t, length, color):
             t.left(turn)
             t.forward(length + (length / 5))
 
-# TODO: ensure it's a valid color
 # Return the user inputted shape size and color
 def configure_shape():
-    num = turtle.numinput("Configure shape", "Shape size", default=100, minval=50, maxval=200)
-    color = turtle.textinput("Configure shape", "Shape color")
+    color = ""
+    num = turtle.numinput("Configure shape", "Shape size", default=100, minval=50, maxval=500)
+
+    # Ensure that the user inputs a valid color by continuing to prompt them if they didn't
+    while True:
+        color = turtle.textinput("Configure shape", "Shape color")
+        try:
+            turtle.color(color)
+            break
+        except:
+            color = turtle.textinput("Configure shape", "Shape color")
+
     # Default to white
     if color == "":
         color = "white"
+
     return int(num), color
 
 def draw_shapes(t):
