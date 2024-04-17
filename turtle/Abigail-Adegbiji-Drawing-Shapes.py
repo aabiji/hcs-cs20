@@ -204,20 +204,107 @@ def draw_l(t, size, color):
 
     return outer_length
 
+# Draw a capital 'c' and return the width of the rendered letter
+def draw_c(t, size, color):
+    ratio = 8
+    tilt, angle = 170, 210
+    outer_edge_size, inner_edge_size = size / 10, size / 6
+    outer_radius, inner_radius = size, size - size / ratio
+    x, y = t.xcor(), t.ycor()
+
+    t.pencolor(color)
+    t.setheading(tilt)
+    t.circle(outer_radius, angle)
+
+    teleport(t, x, y)
+    t.setheading(270)
+    t.forward(outer_edge_size)
+
+    t.setheading(tilt)
+    t.circle(inner_radius, angle)
+
+    t.setheading(270)
+    t.forward(inner_edge_size)
+
+    # We won't return the outer_radius since we end at the bottom
+    # right of the letter
+    return outer_edge_size
+
+def draw_d(t, size, color):
+    t.pencolor(color)
+    radius = size / 2
+
+    t.setheading(270)
+    t.forward(size)
+
+    t.setheading(0)
+    t.circle(radius, 180)
+
+    teleport(t, t.xcor() + radius / 3, t.ycor() - size / 3)
+    t.setheading(270)
+
+    inner_size = size / 4
+    t.forward(inner_size)
+
+    inner_radius = radius / 8
+    t.setheading(0)
+    t.circle(inner_radius, 180)
+
+def draw_e(t, size, color): pass
+def draw_f(t, size, color): pass
+def draw_h(t, size, color): pass
+def draw_j(t, size, color): pass
+def draw_k(t, size, color): pass
+def draw_m(t, size, color): pass
+def draw_n(t, size, color): pass
+def draw_o(t, size, color): pass
+def draw_p(t, size, color): pass
+def draw_q(t, size, color): pass
+def draw_r(t, size, color): pass
+def draw_s(t, size, color): pass
+def draw_t(t, size, color): pass
+def draw_u(t, size, color): pass
+def draw_v(t, size, color): pass
+def draw_w(t, size, color): pass
+def draw_x(t, size, color): pass
+def draw_y(t, size, color): pass
+def draw_z(t, size, color): pass
+
 def draw_text(text, size, color):
     # Map letters to drawing functions
     drawers = {
-        "A": draw_a,
-        "B": draw_b,
-        "I": draw_i,
-        "G": draw_g,
-        "L": draw_l,
+        "a": draw_a,
+        "b": draw_b,
+        "c": draw_c,
+        "d": draw_d,
+        "e": draw_e,
+        "f": draw_f,
+        "g": draw_g,
+        "h": draw_h,
+        "i": draw_i,
+        "j": draw_j,
+        "k": draw_k,
+        "l": draw_l,
+        "m": draw_m,
+        "n": draw_n,
+        "o": draw_o,
+        "p": draw_p,
+        "q": draw_q,
+        "r": draw_r,
+        "s": draw_s,
+        "t": draw_t,
+        "u": draw_u,
+        "v": draw_v,
+        "w": draw_w,
+        "x": draw_x,
+        "y": draw_y,
+        "z": draw_z,
     }
 
     spacing = 20
     x, y = t.xcor(), t.ycor()
     for c in text:
-        width = drawers[c.upper()](t, size, color)
+        width = drawers[c.lower()](t, size, color)
         x += width + spacing
         teleport(t, x, y)
 
@@ -303,13 +390,13 @@ def draw_shapes(t):
     teleport(t, 100, 0)
     size, color = configure_shape()
     draw_tesselation(t, size, color)
-    """
 
-    # TODO: fill in name
-    # TODO: scale letters
     teleport(t, -300, -300)
     size, color = configure_shape()
-    draw_text("b", size, color)
+    draw_text("abigail", size, color)
+    """
+
+    draw_d(t, 100, "white")
 
     window.exitonclick()
 
