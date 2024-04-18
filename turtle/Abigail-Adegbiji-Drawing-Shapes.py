@@ -1,9 +1,6 @@
 """
 5.9 Turtle Assignment One - Drawing Shapes
 Abigail Adegbiji, April 15 2024
-
-Features:
-- Draw any text (a-z)
 """
 
 import math
@@ -57,6 +54,8 @@ def draw_a(t, length, color):
     previous_x, previous_y = t.xcor(), t.ycor()
 
     t.pencolor(color)
+    t.fillcolor(color)
+    t.begin_fill()
 
     # Draw an outer arch
     for i in range(2):
@@ -77,15 +76,22 @@ def draw_a(t, length, color):
             t.setheading(0)
             t.forward(bridge_length)
 
+    t.end_fill()
+
     # Draw the right letter base
     t.setheading(0)
     t.forward(base_length)
+
+    t.fillcolor("black")
+    t.begin_fill()
 
     # We want to find the width of the area under the angled line
     half_length = length * math.cos(math.radians(arch_angles[0]))
 
     teleport(t, previous_x + half_length, previous_y + half_length)
     draw_triangle(t, 0, bridge_length, color, start_in_middle=True)
+
+    t.end_fill()
 
     # Return the width of the rendered letter
     return half_length * 2
@@ -98,78 +104,90 @@ def draw_b(t, length, color):
     hole_radius = length // 11
 
     t.pencolor(color)
+    t.fillcolor(color)
 
     # Draw line going up
     t.setheading(90)
-    t.forward(length)
+    t.forward(length * 0.9)
 
     # Our "curves" are just circles rendered up to
     # a certain angle. Here we draw the bottom and top curves:
     teleport(t, x, y)
+    t.begin_fill()
     t.setheading(-30)
     t.circle(bottom_radius, 180)
 
-    ## Determine the tilt of the upper semi circle
-    # Since the radians stays the same anywhere on the circumference
-    # of the circle, we can get the center of the circle by subtracting the radius
-    cx, cy = t.xcor() - top_radius, t.ycor() + top_radius
-    # Next we can determine the angle from our current position to the center position
-    angle = math.atan2(t.ycor() - cy, t.xcor() - cx)
-    # Our "tilt" will now be the absolute angle in degrees
-    tilt = abs(math.degrees(angle))
-
-    t.setheading(tilt)
+    t.setheading(45) # 45 degree tilt
     t.circle(top_radius, 180)
+    t.end_fill()
 
     # Draw inner holes
-    teleport(t, x + 15, y + (length - 15))
-    t.circle(hole_radius)
-    teleport(t, x + top_radius * 2, y + (length - top_radius * 2))
-    t.circle(hole_radius)
+    t.fillcolor("black")
+    x, y = t.xcor(), t.ycor()
+    hole_x = [
+        x + top_radius / 2,  # Top hole
+        x + top_radius / 1.5 # Bottom hole
+    ]
+    hole_y = [
+        y - top_radius / 2, # Top hole
+        (y - length) + bottom_radius * 1.25 # Bottom hole
+    ]
+    for i in range(2):
+        t.begin_fill()
+        teleport(t, hole_x[i], hole_y[i])
+        t.circle(hole_radius)
+        t.end_fill()
 
     return bottom_radius + top_radius
 
 # Draw a capital 'g' and return the width of the rendered letter
-# TODO: properly scale this
 def draw_g(t, size, color):
-    edge_width, edge_height = 25, 15
-    outer_radius, inner_radius = 50, 35
-    new_x = t.xcor() + outer_radius + edge_width
-    new_y = t.ycor() + outer_radius * 2 - edge_height
-    teleport(t, new_x, new_y)
+    edge_width = size / 5
+    edge_height = size / 10
+    outer_radius = size / 2
+    inner_radius = size / 2.5
+    outer_tilt, inner_tilt = 150, 145
 
-    # Draw outer shape
-    t.setheading(150)
-    t.circle(outer_radius, 300)
+    # Move right and upwards to preserve the position of the letter
+    teleport(t, t.xcor() + outer_radius * 1.8, t.ycor() + outer_radius * 1.8)
+    x, y = t.xcor(), t.ycor()
 
-    # Draw outer horizantal edge going in
-    t.setheading(180)
-    t.forward(edge_width)
+    t.fillcolor(color)
+    t.pencolor(color)
+    t.begin_fill()
 
-    teleport(t, new_x, new_y)
+    # Draw outer curve
+    t.setheading(outer_tilt)
+    t.circle(outer_radius, 310)
+    edge_x, edge_y = t.xcor(), t.ycor()
 
-    # Draw vertical edge going down
+    # Draw top edge
+    teleport(t, x, y)
     t.setheading(270)
     t.forward(edge_height)
 
-    # Draw inner shape
-    t.setheading(140)
-    t.circle(inner_radius, 280)
+    # Draw inner curve
+    t.setheading(inner_tilt)
+    t.circle(inner_radius, 300)
 
-    # Complete drawing the horizantal edge
+    # Draw inner edge
     t.setheading(180)
     t.forward(edge_width)
     t.setheading(90)
-    t.forward(edge_height)
+    t.forward(edge_y - t.ycor())
     t.setheading(0)
-    t.forward(edge_width)
+    t.forward(edge_x - t.xcor())
 
-    return inner_radius * 2 + edge_height
+    t.end_fill()
+    return outer_radius * 2
 
 # Draw a capital 'i' and return the width of the rendered letter
 def draw_i(t, size, color):
+    t.fillcolor(color)
+    t.begin_fill()
     width, height = size / 4, size
     draw_square(t, 0, width, height, color)
+    t.end_fill()
     return width
 
 # Draw a capital 'l' and return the width of the rendered letter
@@ -183,6 +201,9 @@ def draw_l(t, size, color):
 
     end_x, end_y = t.xcor() + outer_length, t.ycor()
     teleport(t, end_x, end_y)
+
+    t.fillcolor(color)
+    t.begin_fill()
 
     # Draw outer shape
     for a in angles:
@@ -202,103 +223,18 @@ def draw_l(t, size, color):
     t.setheading(180)
     t.forward(edge_size)
 
+    t.end_fill()
+
     return outer_length
-
-# Draw a capital 'c' and return the width of the rendered letter
-def draw_c(t, size, color):
-    ratio = 8
-    tilt, angle = 170, 210
-    outer_edge_size, inner_edge_size = size / 10, size / 6
-    outer_radius, inner_radius = size, size - size / ratio
-    x, y = t.xcor(), t.ycor()
-
-    t.pencolor(color)
-    t.setheading(tilt)
-    t.circle(outer_radius, angle)
-
-    teleport(t, x, y)
-    t.setheading(270)
-    t.forward(outer_edge_size)
-
-    t.setheading(tilt)
-    t.circle(inner_radius, angle)
-
-    t.setheading(270)
-    t.forward(inner_edge_size)
-
-    # We won't return the outer_radius since we end at the bottom
-    # right of the letter
-    return outer_edge_size
-
-def draw_d(t, size, color):
-    t.pencolor(color)
-    radius = size / 2
-
-    t.setheading(270)
-    t.forward(size)
-
-    t.setheading(0)
-    t.circle(radius, 180)
-
-    teleport(t, t.xcor() + radius / 3, t.ycor() - size / 3)
-    t.setheading(270)
-
-    inner_size = size / 4
-    t.forward(inner_size)
-
-    inner_radius = radius / 8
-    t.setheading(0)
-    t.circle(inner_radius, 180)
-
-def draw_e(t, size, color): pass
-def draw_f(t, size, color): pass
-def draw_h(t, size, color): pass
-def draw_j(t, size, color): pass
-def draw_k(t, size, color): pass
-def draw_m(t, size, color): pass
-def draw_n(t, size, color): pass
-def draw_o(t, size, color): pass
-def draw_p(t, size, color): pass
-def draw_q(t, size, color): pass
-def draw_r(t, size, color): pass
-def draw_s(t, size, color): pass
-def draw_t(t, size, color): pass
-def draw_u(t, size, color): pass
-def draw_v(t, size, color): pass
-def draw_w(t, size, color): pass
-def draw_x(t, size, color): pass
-def draw_y(t, size, color): pass
-def draw_z(t, size, color): pass
 
 def draw_text(text, size, color):
     # Map letters to drawing functions
     drawers = {
         "a": draw_a,
         "b": draw_b,
-        "c": draw_c,
-        "d": draw_d,
-        "e": draw_e,
-        "f": draw_f,
         "g": draw_g,
-        "h": draw_h,
         "i": draw_i,
-        "j": draw_j,
-        "k": draw_k,
         "l": draw_l,
-        "m": draw_m,
-        "n": draw_n,
-        "o": draw_o,
-        "p": draw_p,
-        "q": draw_q,
-        "r": draw_r,
-        "s": draw_s,
-        "t": draw_t,
-        "u": draw_u,
-        "v": draw_v,
-        "w": draw_w,
-        "x": draw_x,
-        "y": draw_y,
-        "z": draw_z,
     }
 
     spacing = 20
@@ -337,7 +273,7 @@ def draw_tesselation(t, length, color):
             t.forward(length + (length / 5))
 
 # Return the user inputted shape size and color
-def configure_shape():
+def get_shape_info():
     color = ""
     num = turtle.numinput("Configure shape", "Shape size", default=100, minval=50, maxval=500)
 
@@ -359,7 +295,7 @@ def configure_shape():
 def draw_shapes(t):
     """
     teleport(t, -280, 200)
-    size, color = configure_shape()
+    size, color = get_shape_info()
     draw_hexagon(t, size, color)
 
     # Draw composite triangle shape
@@ -367,7 +303,7 @@ def draw_shapes(t):
     # different spots angled successively at (360 / 10) degrees
     teleport(t, -80, 200)
     num_triangles = 10
-    size, color = configure_shape()
+    size, color = get_shape_info()
     for i in range(0, 360, 360 // num_triangles):
         draw_triangle(t, i, size, color)
 
@@ -376,27 +312,26 @@ def draw_shapes(t):
     # same spot angled successively at (360 / 5) degrees
     teleport(t, 120, 200)
     num_triangles = 5
-    size, color = configure_shape()
+    size, color = get_shape_info()
     for i in range(0, 360, 360 // num_triangles):
         draw_triangle(t, i, size, color, True)
 
     # Draw composite square shape by drawing squares at different angles
     teleport(t, -200, 0)
     angles = [90, 0, 270, 180]
-    size, color = configure_shape()
+    size, color = get_shape_info()
     for a in angles:
         draw_square(t, a, size, size / 2, color)
 
     teleport(t, 100, 0)
-    size, color = configure_shape()
+    size, color = get_shape_info()
     draw_tesselation(t, size, color)
-
-    teleport(t, -300, -300)
-    size, color = configure_shape()
-    draw_text("abigail", size, color)
     """
 
-    draw_d(t, 100, "white")
+    teleport(t, -300, -300)
+    size, color = get_shape_info()
+    teleport(t, -300, 0)
+    draw_text("abigail", size, color)
 
     window.exitonclick()
 
@@ -406,7 +341,7 @@ window.bgcolor("black")
 
 t = turtle.Turtle()
 t.pensize(1)
-t.speed("slowest")
+t.speed("normal")
 t.pencolor("white")
 
 draw_shapes(t)
