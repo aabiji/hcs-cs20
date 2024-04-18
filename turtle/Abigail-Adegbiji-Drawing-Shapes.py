@@ -283,21 +283,41 @@ def draw_tesselation(t, length, color):
             t.forward(length + (length / 5))
 
 def draw_tesselation2(t, size, color):
-    line_length = size / 2
-    width, height = size, size / 2
+    line_length = size / 3
+    triangle_size = line_length / 3
     center_x, center_y = t.xcor(), t.ycor()
+
     for angle in range(0, 360, 360 // 8):
         offset_angle = angle - 90
         teleport(t, center_x, center_y)
         t.setheading(angle)
 
-        t.forward(line_length)
-        draw_triangle(t, offset_angle, line_length, color, start_in_middle=True)
+        t.forward(line_length / 2)
+        draw_triangle(t, offset_angle, triangle_size, color, start_in_middle=True)
 
         t.setheading(angle)
-        t.forward(line_length) # TODO: this should be teleport()
-        t.forward(line_length * 2)
+        t.penup()
+        t.forward(triangle_size)
+        t.pendown()
+
+        t.forward(line_length)
+        width = line_length * 1.5
+        height = line_length / 2
         draw_square(t, offset_angle, width, height, color, start_in_middle=True)
+
+        t.setheading(angle)
+        t.penup()
+        t.forward(height)
+        t.pendown()
+
+        t.left(45)
+        t.forward(height)
+        t.left(45)
+        t.forward(height)
+        t.right(10)
+        t.forward(height)
+        t.left(45)
+        t.forward(height)
 
 # Return the user inputted shape size and color
 def get_shape_info():
