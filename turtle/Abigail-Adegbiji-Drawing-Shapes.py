@@ -18,13 +18,24 @@ def draw_hexagon(t, side_length, color):
         t.forward(side_length)
         t.left(angle)
 
-def draw_square(t, angle, width, height, color):
+def draw_square(t, angle, width, height, color, start_in_middle=False):
     t.setheading(angle)
     t.pencolor(color)
+
+    # Move halfway back
+    if start_in_middle:
+        t.left(180)
+        t.forward(width / 2)
+        t.left(180)
+
     for i in range(4):
         length = width if i % 2 == 0 else height
         t.forward(length)
         t.left(90)
+
+    # Move back to the center position
+    if start_in_middle:
+        t.forward(width / 2)
 
 def draw_triangle(t, angle, side_length, color, start_in_middle=False):
     t.setheading(angle)
@@ -244,7 +255,6 @@ def draw_text(text, size, color):
         x += width + spacing
         teleport(t, x, y)
 
-# Draw an "exceptional" shape (tesselation)
 def draw_tesselation(t, length, color):
     t.pencolor(color)
 
@@ -271,6 +281,23 @@ def draw_tesselation(t, length, color):
         for i, turn in enumerate(turns):
             t.left(turn)
             t.forward(length + (length / 5))
+
+def draw_tesselation2(t, size, color):
+    line_length = size / 2
+    width, height = size, size / 2
+    center_x, center_y = t.xcor(), t.ycor()
+    for angle in range(0, 360, 360 // 8):
+        offset_angle = angle - 90
+        teleport(t, center_x, center_y)
+        t.setheading(angle)
+
+        t.forward(line_length)
+        draw_triangle(t, offset_angle, line_length, color, start_in_middle=True)
+
+        t.setheading(angle)
+        t.forward(line_length) # TODO: this should be teleport()
+        t.forward(line_length * 2)
+        draw_square(t, offset_angle, width, height, color, start_in_middle=True)
 
 # Return the user inputted shape size and color
 def get_shape_info():
@@ -326,12 +353,14 @@ def draw_shapes(t):
     teleport(t, 100, 0)
     size, color = get_shape_info()
     draw_tesselation(t, size, color)
-    """
 
     teleport(t, -300, -300)
     size, color = get_shape_info()
     teleport(t, -300, 0)
     draw_text("abigail", size, color)
+    """
+
+    draw_tesselation2(t, 100, "white")
 
     window.exitonclick()
 
@@ -341,7 +370,7 @@ window.bgcolor("black")
 
 t = turtle.Turtle()
 t.pensize(1)
-t.speed("normal")
+t.speed("slowest")
 t.pencolor("white")
 
 draw_shapes(t)
