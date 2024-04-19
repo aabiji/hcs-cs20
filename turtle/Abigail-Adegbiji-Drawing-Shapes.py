@@ -1,12 +1,12 @@
 """
 5.9 Turtle Assignment One - Drawing Shapes
+by Abigail Adegbiji
+April 19, 2024
 
 "Exceptional" features:
-- You said that the letters used to draw your name should be in a block form.
-  So, I made the letters curved and filled them in.
+- You said that the user should be able to choose the shape color and size.
+  So, I made sure that there input is valid. See the configure_shape function.
 - I also decided to draw a fractal -- a Sierpiński triangle
-
-Abigail Adegbiji, April 18 2024
 """
 
 import math
@@ -17,7 +17,7 @@ def goto(t, x, y):
     t.goto(x, y)
     t.pendown()
 
-# Draw a hexagon and return it's width
+# Draw a hexagon and return its width
 def draw_hexagon(t, side_length, color):
     goto(t, t.xcor(), t.ycor() - side_length / 2)
 
@@ -81,8 +81,6 @@ def draw_a(t, length, color):
     previous_x, previous_y = t.xcor(), t.ycor()
 
     t.pencolor(color)
-    t.fillcolor(color)
-    t.begin_fill()
 
     # Draw an outer arch
     for i in range(2):
@@ -103,22 +101,15 @@ def draw_a(t, length, color):
             t.setheading(0)
             t.forward(bridge_length)
 
-    t.end_fill()
-
     # Draw the right letter base
     t.setheading(0)
     t.forward(base_length)
-
-    t.fillcolor("black")
-    t.begin_fill()
 
     # We want to find the width of the area under the angled line
     half_length = length * math.cos(math.radians(arch_angles[0]))
 
     goto(t, previous_x + half_length, previous_y + half_length)
     draw_triangle(t, 0, bridge_length, color, start_in_middle=True)
-
-    t.end_fill()
 
     # Return the width of the rendered letter
     return half_length * 2
@@ -131,7 +122,6 @@ def draw_b(t, length, color):
     hole_radius = length // 11
 
     t.pencolor(color)
-    t.fillcolor(color)
 
     # Draw line going up
     t.setheading(90)
@@ -140,16 +130,13 @@ def draw_b(t, length, color):
     # Our "curves" are just circles rendered up to
     # a certain angle. Here we draw the bottom and top curves:
     goto(t, x, y)
-    t.begin_fill()
     t.setheading(-30)
     t.circle(bottom_radius, 180)
 
     t.setheading(45) # 45 degree tilt
     t.circle(top_radius, 180)
-    t.end_fill()
 
     # Draw inner holes
-    t.fillcolor("black")
     x, y = t.xcor(), t.ycor()
     hole_x = [
         x + top_radius / 2,  # Top hole
@@ -160,10 +147,8 @@ def draw_b(t, length, color):
         (y - length) + bottom_radius * 1.25 # Bottom hole
     ]
     for i in range(2):
-        t.begin_fill()
         goto(t, hole_x[i], hole_y[i])
         t.circle(hole_radius)
-        t.end_fill()
 
     return bottom_radius + top_radius
 
@@ -179,9 +164,7 @@ def draw_g(t, size, color):
     goto(t, t.xcor() + outer_radius * 1.8, t.ycor() + outer_radius * 1.8)
     x, y = t.xcor(), t.ycor()
 
-    t.fillcolor(color)
     t.pencolor(color)
-    t.begin_fill()
 
     # Draw outer curve
     t.setheading(outer_tilt)
@@ -205,17 +188,13 @@ def draw_g(t, size, color):
     t.setheading(0)
     t.forward(edge_x - t.xcor())
 
-    t.end_fill()
     return outer_radius * 2
 
 # Draw a capital 'i' and return the width of the rendered letter
 def draw_i(t, size, color):
-    t.fillcolor(color)
-    t.begin_fill()
     width = size / 4
     height = size
     draw_square(t, 0, width, height, color)
-    t.end_fill()
     return width
 
 # Draw a capital 'l' and return the width of the rendered letter
@@ -229,9 +208,6 @@ def draw_l(t, size, color):
 
     end_x, end_y = t.xcor() + outer_length, t.ycor()
     goto(t, end_x, end_y)
-
-    t.fillcolor(color)
-    t.begin_fill()
 
     # Draw outer shape
     for a in angles:
@@ -250,8 +226,6 @@ def draw_l(t, size, color):
     # Draw top edge
     t.setheading(180)
     t.forward(edge_size)
-
-    t.end_fill()
 
     return outer_length
 
@@ -332,9 +306,17 @@ def draw_sierpinski(iterations, max_iterations, t, size, color):
             goto(t, position[0], position[1])
             draw_sierpinski(iterations + 1, max_iterations, t, scaled_size, color)
 
-def get_shape_color():
-    color = ""
+def get_int():
+    # Ensure that the user inputs a valid number by continuing to prompt them if they didn't
+    while True:
+        num_str = turtle.numinput("Configure shape", "Shape size", default=100, minval=50, maxval=600)
+        try:
+            num = int(num_str)
+            return num
+        except:
+            pass
 
+def get_color():
     # Ensure that the user inputs a valid color by continuing to prompt them if they didn't
     while True:
         color = turtle.textinput("Configure shape", "Shape color")
@@ -343,23 +325,24 @@ def get_shape_color():
             temporary.color(color)
             temporary.hideturtle()
             del temporary # Delete the object
-            break
+
+            # Default to a white color
+            if color == "":
+                color = "white"
+            return color
         except:
-            color = turtle.textinput("Configure shape", "Shape color")
+            pass
 
-    # Default to white
-    if color == "":
-        color = "white"
-
-    return color
+# Get the shape color and size from a GUi input
+def configure_shape():
+    return get_int(), get_color()
 
 def draw_shapes(t):
     x, y = -270, 180
-    size = 100
     padding = 20
     goto(t, x, y)
 
-    color = get_shape_color()
+    size, color = configure_shape()
     width = draw_hexagon(t, size, color)
     x += width + padding
 
@@ -369,7 +352,7 @@ def draw_shapes(t):
     num_triangles = 10
     x += size
     goto(t, x, y)
-    color = get_shape_color()
+    size, color = configure_shape()
     for i in range(0, 360, 360 // num_triangles):
         draw_triangle(t, i, size, color)
 
@@ -379,7 +362,7 @@ def draw_shapes(t):
     num_triangles = 5
     x += size * 2
     goto(t, x, y)
-    color = get_shape_color()
+    size, color = configure_shape()
     for i in range(0, 360, 360 // num_triangles):
         draw_triangle(t, i, size, color, True)
 
@@ -388,20 +371,20 @@ def draw_shapes(t):
     y -= size * 2
     # Draw composite square shape by drawing squares at different angles
     goto(t, x, y)
-    color = get_shape_color()
+    size, color = configure_shape()
     angles = [90, 0, 270, 180]
     for a in angles:
         draw_square(t, a, size, size / 2, color)
 
     x += size * 2 + padding
     goto(t, x, y)
-    color = get_shape_color()
+    size, color = configure_shape()
     draw_tesselation(t, size, color)
 
     x += size + padding
     y -= size
     goto(t, x, y)
-    color = get_shape_color()
+    size, color = configure_shape()
     num = turtle.numinput("Configure fractal", "Number of iterations", default=3, minval=2, maxval=6)
     draw_sierpinski(0, int(num), t, size * 2.5, color)
 
@@ -409,7 +392,7 @@ def draw_shapes(t):
     x = -300
     y -= size * 2
     goto(t, x, y)
-    color = get_shape_color()
+    size, color = configure_shape()
     draw_text("abigail", size, color)
 
     canvas.exitonclick()
@@ -418,18 +401,8 @@ canvas = turtle.Screen()
 canvas.setup(750, 650)
 canvas.bgcolor("black")
 
-# Allows for the objects to be scaled larger or smaller based on user input 
-# from a GUI (Graphical User Interface - a window input)???
-"""
-canvas.mode("world")
-def resize(event):
-    w, h = event.width, event.height
-    canvas.setworldcoordinates(-w, -h, w, h)
-turtle.getcanvas().bind("<Configure>", resize)
-"""
-
 t = turtle.Turtle()
 t.pensize(1)
-t.speed("fastest")
+t.speed("slowest")
 
 draw_shapes(t)
