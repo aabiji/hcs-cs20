@@ -332,10 +332,8 @@ def draw_sierpinski(iterations, max_iterations, t, size, color):
             goto(t, position[0], position[1])
             draw_sierpinski(iterations + 1, max_iterations, t, scaled_size, color)
 
-# Return the user inputted shape size and color
-def get_shape_info():
+def get_shape_color():
     color = ""
-    num = turtle.numinput("Configure shape", "Shape size", default=100, minval=50, maxval=500)
 
     # Ensure that the user inputs a valid color by continuing to prompt them if they didn't
     while True:
@@ -353,16 +351,15 @@ def get_shape_info():
     if color == "":
         color = "white"
 
-    return int(num), color
+    return color
 
 def draw_shapes(t):
     x, y = -270, 180
+    size = 100
     padding = 20
     goto(t, x, y)
 
-    # Let the user set the color and the size of the shapes
-    size, color = get_shape_info()
-
+    color = get_shape_color()
     width = draw_hexagon(t, size, color)
     x += width + padding
 
@@ -372,6 +369,7 @@ def draw_shapes(t):
     num_triangles = 10
     x += size
     goto(t, x, y)
+    color = get_shape_color()
     for i in range(0, 360, 360 // num_triangles):
         draw_triangle(t, i, size, color)
 
@@ -381,6 +379,7 @@ def draw_shapes(t):
     num_triangles = 5
     x += size * 2
     goto(t, x, y)
+    color = get_shape_color()
     for i in range(0, 360, 360 // num_triangles):
         draw_triangle(t, i, size, color, True)
 
@@ -389,31 +388,45 @@ def draw_shapes(t):
     y -= size * 2
     # Draw composite square shape by drawing squares at different angles
     goto(t, x, y)
+    color = get_shape_color()
     angles = [90, 0, 270, 180]
     for a in angles:
         draw_square(t, a, size, size / 2, color)
 
     x += size * 2 + padding
     goto(t, x, y)
+    color = get_shape_color()
     draw_tesselation(t, size, color)
 
     x += size + padding
     y -= size
     goto(t, x, y)
-    num = turtle.numinput("Configure fractal", "Number of iterations", default=3, minval=3, maxval=6)
+    color = get_shape_color()
+    num = turtle.numinput("Configure fractal", "Number of iterations", default=3, minval=2, maxval=6)
     draw_sierpinski(0, int(num), t, size * 2.5, color)
 
     # Move down to the next line
     x = -300
     y -= size * 2
     goto(t, x, y)
+    color = get_shape_color()
     draw_text("abigail", size, color)
 
-    window.exitonclick()
+    canvas.exitonclick()
 
-window = turtle.Screen()
-window.setup(750, 650)
-window.bgcolor("black")
+canvas = turtle.Screen()
+canvas.setup(750, 650)
+canvas.bgcolor("black")
+
+# Allows for the objects to be scaled larger or smaller based on user input 
+# from a GUI (Graphical User Interface - a window input)???
+"""
+canvas.mode("world")
+def resize(event):
+    w, h = event.width, event.height
+    canvas.setworldcoordinates(-w, -h, w, h)
+turtle.getcanvas().bind("<Configure>", resize)
+"""
 
 t = turtle.Turtle()
 t.pensize(1)
