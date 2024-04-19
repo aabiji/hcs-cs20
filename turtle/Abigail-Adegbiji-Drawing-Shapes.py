@@ -1,22 +1,38 @@
 """
 5.9 Turtle Assignment One - Drawing Shapes
-Abigail Adegbiji, April 15 2024
+
+"Exceptional" features:
+- You said that the letters used to draw your name should be in a block form.
+  So, I made the letters curved and filled them in.
+- I also decided to draw a fractal -- a Sierpiński triangle
+
+Abigail Adegbiji, April 18 2024
 """
 
 import math
 import turtle
 
-def teleport(t, x, y):
+def goto(t, x, y):
     t.penup()
     t.goto(x, y)
     t.pendown()
 
+# Draw a hexagon and return it's width
 def draw_hexagon(t, side_length, color):
+    goto(t, t.xcor(), t.ycor() - side_length / 2)
+
+    prev_x = t.xcor()
+    farthest_x = 0
+
     angle = 360 // 6
     t.pencolor(color)
     for i in range(6):
         t.forward(side_length)
         t.left(angle)
+        if i == 1:
+            farthest_x = t.xcor()
+
+    return farthest_x - prev_x
 
 def draw_square(t, angle, width, height, color, start_in_middle=False):
     t.setheading(angle)
@@ -73,7 +89,7 @@ def draw_a(t, length, color):
         t.setheading(arch_angles[i])
         t.forward(length)
 
-    teleport(t, previous_x, previous_y)
+    goto(t, previous_x, previous_y)
 
     # Draw the left letter base
     t.setheading(0)
@@ -99,7 +115,7 @@ def draw_a(t, length, color):
     # We want to find the width of the area under the angled line
     half_length = length * math.cos(math.radians(arch_angles[0]))
 
-    teleport(t, previous_x + half_length, previous_y + half_length)
+    goto(t, previous_x + half_length, previous_y + half_length)
     draw_triangle(t, 0, bridge_length, color, start_in_middle=True)
 
     t.end_fill()
@@ -123,7 +139,7 @@ def draw_b(t, length, color):
 
     # Our "curves" are just circles rendered up to
     # a certain angle. Here we draw the bottom and top curves:
-    teleport(t, x, y)
+    goto(t, x, y)
     t.begin_fill()
     t.setheading(-30)
     t.circle(bottom_radius, 180)
@@ -145,7 +161,7 @@ def draw_b(t, length, color):
     ]
     for i in range(2):
         t.begin_fill()
-        teleport(t, hole_x[i], hole_y[i])
+        goto(t, hole_x[i], hole_y[i])
         t.circle(hole_radius)
         t.end_fill()
 
@@ -160,7 +176,7 @@ def draw_g(t, size, color):
     outer_tilt, inner_tilt = 150, 145
 
     # Move right and upwards to preserve the position of the letter
-    teleport(t, t.xcor() + outer_radius * 1.8, t.ycor() + outer_radius * 1.8)
+    goto(t, t.xcor() + outer_radius * 1.8, t.ycor() + outer_radius * 1.8)
     x, y = t.xcor(), t.ycor()
 
     t.fillcolor(color)
@@ -173,7 +189,7 @@ def draw_g(t, size, color):
     edge_x, edge_y = t.xcor(), t.ycor()
 
     # Draw top edge
-    teleport(t, x, y)
+    goto(t, x, y)
     t.setheading(270)
     t.forward(edge_height)
 
@@ -196,7 +212,8 @@ def draw_g(t, size, color):
 def draw_i(t, size, color):
     t.fillcolor(color)
     t.begin_fill()
-    width, height = size / 4, size
+    width = size / 4
+    height = size
     draw_square(t, 0, width, height, color)
     t.end_fill()
     return width
@@ -211,7 +228,7 @@ def draw_l(t, size, color):
     angles = [180, 90]
 
     end_x, end_y = t.xcor() + outer_length, t.ycor()
-    teleport(t, end_x, end_y)
+    goto(t, end_x, end_y)
 
     t.fillcolor(color)
     t.begin_fill()
@@ -222,7 +239,7 @@ def draw_l(t, size, color):
         t.forward(outer_length)
 
     # Draw bottom right edge
-    teleport(t, end_x, end_y)
+    goto(t, end_x, end_y)
     t.forward(edge_size)
 
     # Draw inner shape
@@ -253,17 +270,18 @@ def draw_text(text, size, color):
     for c in text:
         width = drawers[c.lower()](t, size, color)
         x += width + spacing
-        teleport(t, x, y)
+        goto(t, x, y)
 
 def draw_tesselation(t, length, color):
     t.pencolor(color)
+    length /= 5
 
     num_sides = 8
     right_angle = 90
     center_x, center_y = t.xcor(), t.ycor()
     turns = [270, 45, 135, 315, 90, 315, 135, 45]
     for a in range(0, 360, 360 // num_sides):
-        teleport(t, center_x, center_y)
+        goto(t, center_x, center_y)
 
         # Draw the inner "crest"
         # Really it's composed of 8 squares connected 
@@ -282,42 +300,37 @@ def draw_tesselation(t, length, color):
             t.left(turn)
             t.forward(length + (length / 5))
 
-def draw_tesselation2(t, size, color):
-    line_length = size / 3
-    triangle_size = line_length / 3
-    center_x, center_y = t.xcor(), t.ycor()
+# Draw a Sierpiński triangle
+# A Sierpiński triangle is a fractal in the shape of a equilateral triangle
+# Here's a really good explanation: https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle
+def draw_sierpinski(iterations, max_iterations, t, size, color):
+    """
+    We use the shrinking and duplication algorithm:
+    We render 3 miniature triangles positioning them so that
+    their corners touch those of the other 2 triangles.
+    As such, the central hole is emergently created.
+    We then repeat the entire algorithm for each miniature triangle.
+    """
+    triangle_positions = []
+    scaled_size = size / 2
 
-    for angle in range(0, 360, 360 // 8):
-        offset_angle = angle - 90
-        teleport(t, center_x, center_y)
-        t.setheading(angle)
+    triangle_positions.append(t.pos())
+    draw_triangle(t, 0, scaled_size, color)
 
-        t.forward(line_length / 2)
-        draw_triangle(t, offset_angle, triangle_size, color, start_in_middle=True)
+    t.forward(scaled_size)
+    triangle_positions.append(t.pos())
+    draw_triangle(t, 0, scaled_size, color)
 
-        t.setheading(angle)
-        t.penup()
-        t.forward(triangle_size)
-        t.pendown()
+    t.left(120)
+    t.forward(scaled_size)
+    triangle_positions.append(t.pos())
+    draw_triangle(t, 0, scaled_size, color)
 
-        t.forward(line_length)
-        width = line_length * 1.5
-        height = line_length / 2
-        draw_square(t, offset_angle, width, height, color, start_in_middle=True)
-
-        t.setheading(angle)
-        t.penup()
-        t.forward(height)
-        t.pendown()
-
-        t.left(45)
-        t.forward(height)
-        t.left(45)
-        t.forward(height)
-        t.right(10)
-        t.forward(height)
-        t.left(45)
-        t.forward(height)
+    # Render the child triangles recursively
+    if iterations < max_iterations:
+        for position in triangle_positions:
+            goto(t, position[0], position[1])
+            draw_sierpinski(iterations + 1, max_iterations, t, scaled_size, color)
 
 # Return the user inputted shape size and color
 def get_shape_info():
@@ -328,7 +341,10 @@ def get_shape_info():
     while True:
         color = turtle.textinput("Configure shape", "Shape color")
         try:
-            turtle.color(color)
+            temporary = turtle.Turtle()
+            temporary.color(color)
+            temporary.hideturtle()
+            del temporary # Delete the object
             break
         except:
             color = turtle.textinput("Configure shape", "Shape color")
@@ -340,57 +356,67 @@ def get_shape_info():
     return int(num), color
 
 def draw_shapes(t):
-    """
-    teleport(t, -280, 200)
+    x, y = -270, 180
+    padding = 20
+    goto(t, x, y)
+
+    # Let the user set the color and the size of the shapes
     size, color = get_shape_info()
-    draw_hexagon(t, size, color)
+
+    width = draw_hexagon(t, size, color)
+    x += width + padding
 
     # Draw composite triangle shape
     # For each of the 10 triangles, we'll draw them at the
     # different spots angled successively at (360 / 10) degrees
-    teleport(t, -80, 200)
     num_triangles = 10
-    size, color = get_shape_info()
+    x += size
+    goto(t, x, y)
     for i in range(0, 360, 360 // num_triangles):
         draw_triangle(t, i, size, color)
 
     # Draw star shape
     # For each of the 5 triangles, we'll draw them at the
     # same spot angled successively at (360 / 5) degrees
-    teleport(t, 120, 200)
     num_triangles = 5
-    size, color = get_shape_info()
+    x += size * 2
+    goto(t, x, y)
     for i in range(0, 360, 360 // num_triangles):
         draw_triangle(t, i, size, color, True)
 
+    # Move down to the next line
+    x = -270
+    y -= size * 2
     # Draw composite square shape by drawing squares at different angles
-    teleport(t, -200, 0)
+    goto(t, x, y)
     angles = [90, 0, 270, 180]
-    size, color = get_shape_info()
     for a in angles:
         draw_square(t, a, size, size / 2, color)
 
-    teleport(t, 100, 0)
-    size, color = get_shape_info()
+    x += size * 2 + padding
+    goto(t, x, y)
     draw_tesselation(t, size, color)
 
-    teleport(t, -300, -300)
-    size, color = get_shape_info()
-    teleport(t, -300, 0)
-    draw_text("abigail", size, color)
-    """
+    x += size + padding
+    y -= size
+    goto(t, x, y)
+    num = turtle.numinput("Configure fractal", "Number of iterations", default=3, minval=3, maxval=6)
+    draw_sierpinski(0, int(num), t, size * 2.5, color)
 
-    draw_tesselation2(t, 100, "white")
+    # Move down to the next line
+    x = -300
+    y -= size * 2
+    goto(t, x, y)
+    draw_text("abigail", size, color)
 
     window.exitonclick()
 
 window = turtle.Screen()
-window.setup(650, 650)
+window.setup(750, 650)
 window.bgcolor("black")
 
 t = turtle.Turtle()
 t.pensize(1)
-t.speed("slowest")
-t.pencolor("white")
+t.speed("fastest")
 
 draw_shapes(t)
