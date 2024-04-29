@@ -18,16 +18,18 @@ def split_story(story_str):
 # and the text itself goes on the right
 def build_story_ui(prompts, story):
     inputs = []
+    labels = []
     for p in prompts:
-        layout = [gui.Text(p), gui.InputText(size=25, key=p)]
-        inputs.append(layout)
+        labels.append([gui.Text(p)])
+        inputs.append([gui.InputText(size=25, key=p)])
+    aligned = [[gui.Column(labels), gui.Column(inputs)]]
 
     buttons = [gui.Button("Generate")]
-    inputs.append(buttons)
+    aligned.append(buttons)
 
     text = [[gui.Text(" ".join(line))] for line in story]
 
-    return [[gui.Column(inputs), gui.Column(text, id="Text")]]
+    return [[gui.Column(aligned), gui.Column(text, key="Text")]]
 
 humpty_dumpty = """
 Humpty Dumpty sat on a wall,
@@ -37,8 +39,15 @@ All the king's horses and all the king's men
 Couldn't put Humpty together again. 
 """
 story = split_story(humpty_dumpty)
-prompts = ["First name", "Last name", "Verb" + " " * 8]
-story1 = build_story_ui(prompts, story)
+# Map inputs to the indexes of the words they'll replace
+prompts = {
+    "Person's First Name": [],
+    "Person's Last Name": [],
+    "Verb (past tense action)": [],
+    "Job Title": [],
+    "Animal (plural)": [],
+}
+story_ui = build_story_ui(list(prompts.keys()), story)
 
 # GUI layout for the main menu
 menu_layout = [
@@ -52,7 +61,7 @@ menu_layout = [
 # Start with only having the main menu visible
 layouts = [[
     gui.Column(menu_layout, key="Main-Menu"),
-    gui.Column(story1, key="Layout-1", visible=False),
+    gui.Column(story_ui, key="Layout-1", visible=False),
 ]]
 window = gui.Window("Madlibs", layouts)
 
