@@ -115,14 +115,14 @@ Pick up sticks
 Seven, Eight
 Lay them straight
 Nine, ten
-A big fat hen!
+A big fat hen
 """
 replacements = {
     "Object (footwear)": "shoe",
     "Object (something inside a house)": "door",
     "Noun": "sticks",
     "Direction": "straight",
-    "Animal": "hen!"
+    "Animal": "hen"
 }
 story2 = Story(buckle_my_shoe, replacements, "p0-")
 
@@ -141,6 +141,8 @@ layouts = [[
 
 window = gui.Window("Madlibs", layouts)
 story = None # Will be a Story object when we choose which story in the main menu
+
+# TODO: handle punctuation
 
 while True:
     event, values = window.read()
