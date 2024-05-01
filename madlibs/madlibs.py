@@ -1,28 +1,40 @@
 # Madlibs
 # By Abigail Adegbiji, April 26, 2024
 import copy
+import random
 import PySimpleGUI as gui
 
 # Read a file and returns all the lines it contains
-def read_file(filename):
+def read_file_lines(filename):
     contents = ""
     with open(filename, "r") as file:
         contents = file.read()
     lines = contents.split("\n")
     return lines
 
-# Return false if we don't have the required text
+# Return false if we don't have all the required text
 # files that we'll randomly select words from
 def should_auto_generate():
-    required_files = ["nouns.txt", "names.txt", "past-tense-verbs.txt"]
+    required_files = ["nouns.txt", "names.txt", "past-tense-verbs.txt", "adjectives.txt"]
     for filename in required_files:
         try:
-            read_file(filename)
+            read_file_lines(filename)
         except:
             return False
     return True
 
-print(should_auto_generate())
+names = read_file_lines("names.txt")
+verbs = read_file_lines("past-tense-verbs.txt")
+adjectives = read_file_lines("adjectives.txt")
+nouns = read_file_lines("nouns.txt")
+def get_random_word(word_type):
+    if word_type == "verb":
+        return random.choice(verbs)
+    elif word_type == "noun":
+        return random.choice(nouns)
+    elif word_type == "adjective":
+        return random.choice(adjectives)
+    return random.choice(names)
 
 # Return a 2d array containing each word in each sentence
 def split_story(story_str):
@@ -46,55 +58,91 @@ def get_occurences(text, word):
                 indexes.append([x, y])
     return indexes
 
+# A class to group the word we want to replace,
+# what type of word it is (noun, verb, adjective, etc) and
+# what ending it should have (s, ", 's, etc).
+class Replacement:
+    def __init__(self, word, word_type, ending):
+        self.word = word
+        self.word_type = word_type
+        self.ending = ending
+        self.indexes = []  # [x, y] positions in a text where the word is found
+
 class Story:
     def __init__(self, text_str, replacements, id):
         self.id = id
-        self.story = split_story(text_str)
-        self.reversed_story = []
-        self.weird_story = []
+        self.text = split_story(text_str)
+        self.reversed_text = []
+        self.weird_text = []
 
         # Replacements map the user inputted word with the word
         # in the story it's supposed to replace
         self.prompts = {}
         for key in replacements:
-            self.prompts[key] = get_occurences(self.story, replacements[key])
+            replacement = replacements[key]
+            replacement.indexes = get_occurences(self.text, replacement.word)
+            self.prompts[key] = replacement
 
     # Generate the new story by replacing some words with user inputted words
     # Generate a "weird" version of the story by making each word in the story
     # uppercase and replacing each 'a' with 'o'
     # Generate a "reversed" version of the story by making each user inputted word reversed
-    def generate_madlibs(self, words):
-        self.reversed_story = copy.deepcopy(self.story)
-        for label in self.prompts:
-            for index in self.prompts[label]:
-                x, y = index[0], index[1]
-                self.story[y][x] = words[label]
-                self.reversed_story[y][x] = words[label][::-1]
+    # If words is a empty list, we auto generate, picking random words from text files
+    def generate(self, words):
+        auto_generate = len(words) == 0
 
-        self.weird_story = copy.deepcopy(self.story)
-        for y in range(len(self.weird_story)):
-            line = self.weird_story[y]
+        # Get random words for each key once, to
+        # make the story more cohesive
+        random_words = {}
+        for key in self.prompts:
+            replacement = self.prompts[key]
+            random_words[key] = get_random_word(replacement.word_type)
+
+        # TODO: explain this
+        self.reversed_text = copy.deepcopy(self.text)
+        for key in self.prompts:
+            replacement = self.prompts[key]
+            for index in replacement.indexes:
+                x, y = index[0], index[1]
+                if auto_generate:
+                    word = random_words[key] + replacement.ending
+                else:
+                    word = words[key] + replacement.ending
+                self.text[y][x] = word
+                self.reversed_text[y][x] = word[::-1]
+
+        # Make each word uppercase and replace the 'a' with 'o'
+        self.weird_text = copy.deepcopy(self.text)
+        for y in range(len(self.weird_text)):
+            line = self.weird_text[y]
             for x in range(len(line)):
-                self.weird_story[y][x] = self.weird_story[y][x].replace("a", "o").upper()
+                string =  self.weird_text[y][x].replace("a", "o").upper()
+                self.weird_text[y][x] = string
 
     def build_ui(self):
         inputs = []
         labels = []
 
-        # Render each input labels on column and all input fields in another column
+        # Render each input labels in a column and all input fields in another column
         for p in self.prompts:
             labels.append([gui.Text(p)])
             inputs.append([gui.InputText(size=25, key=p)])
 
+        # Only add the auto generation feature when we have
+        # the necessary files
+        generation_buttons = [gui.Button("Generate")]
+        if should_auto_generate():
+            generation_buttons.append(gui.Button("Auto Generate"))
+
         left_side = [
             [gui.Column(labels), gui.Column(inputs)],
-            [gui.Button("Generate")]
+            generation_buttons
         ]
 
         right_side = []
         # Render each line of the story on different lines
-        for i in range(len(self.story)):
-            line = " ".join(self.story[i])
+        for i in range(len(self.text)):
+            line = " ".join(self.text[i])
             # The text_id_prefix is used to differentiate between text from
             # the different stories
             right_side.append([gui.Text(line, key=f"{self.id}{i}")])
@@ -118,11 +166,11 @@ All the king's horses and all the king's men.
 Couldn't put Humpty together again. 
 """
 replacements = {
-    "Person's First Name": "Humpty",
-    "Person's Last Name": "Dumpty",
-    "Verb (past tense action": "sat",
-    "Job Title": "king's",
-    "Animal (plural)": "horses"
+    "Person's First Name": Replacement("Humpty", "name", ""),
+    "Person's Last Name": Replacement("Dumpty", "name", ""),
+    "Verb (past tense action": Replacement("sat", "verb", ""),
+    "Job Title": Replacement("king's", "noun", "'s"),
+    "Animal (plural)": Replacement("horses", "noun", "s")
 }
 story1 = Story(humpty_dumpty, replacements, "p1-")
 
@@ -139,11 +187,11 @@ Nine, ten
 A big fat hen
 """
 replacements = {
-    "Object (footwear)": "shoe",
-    "Object (something inside a house)": "door",
-    "Noun": "sticks",
-    "Direction": "straight",
-    "Animal": "hen"
+    "Noun (footwear)": Replacement("shoe", "noun", ""),
+    "Noun (something inside a house)": Replacement("door", "noun", ""),
+    "Noun": Replacement("sticks", "noun", "s"),
+    "Direction": Replacement("straight", "adjective", ""),
+    "Animal": Replacement("hen", "noun", "")
 }
 story2 = Story(buckle_my_shoe, replacements, "p0-")
 
@@ -162,8 +210,6 @@ layouts = [[
 
 window = gui.Window("Madlibs", layouts)
 story = None # Will be a Story object when we choose which story in the main menu
-
-# TODO: handle punctuation
 
 while True:
     event, values = window.read()
@@ -189,15 +235,20 @@ while True:
                 should_generate = False
                 break
         if should_generate:
-            story.generate_madlibs(values)
-            update_text(window, story.id, story.story)
+            story.generate(values)
+            update_text(window, story.id, story.text)
+
+    # Auto generate the madlibs when the "Auto generate" button is clicked
+    if "Auto Generate" in event:
+        story.generate([])
+        update_text(window, story.id, story.text)
 
     # Switch to different versions of the story on button click
     if "Weird version" in event:
-        update_text(window, story.id, story.weird_story)
+        update_text(window, story.id, story.weird_text)
     elif "Reversed version" in event:
-        update_text(window, story.id, story.reversed_story)
+        update_text(window, story.id, story.reversed_text)
     elif "Normal version" in event:
-        update_text(window, story.id, story.story)
+        update_text(window, story.id, story.text)
 
 window.close()
