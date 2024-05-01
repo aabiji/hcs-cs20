@@ -3,6 +3,27 @@
 import copy
 import PySimpleGUI as gui
 
+# Read a file and returns all the lines it contains
+def read_file(filename):
+    contents = ""
+    with open(filename, "r") as file:
+        contents = file.read()
+    lines = contents.split("\n")
+    return lines
+
+# Return false if we don't have the required text
+# files that we'll randomly select words from
+def should_auto_generate():
+    required_files = ["nouns.txt", "names.txt", "past-tense-verbs.txt"]
+    for filename in required_files:
+        try:
+            read_file(filename)
+        except:
+            return False
+    return True
+
+print(should_auto_generate())
+
 # Return a 2d array containing each word in each sentence
 def split_story(story_str):
     story = []
