@@ -1,5 +1,9 @@
-# Madlibs
-# By Abigail Adegbiji, April 26, 2024
+"""
+Abigail Adegbiji
+Date: May 2, 2024
+
+A program that allows the user to generate madlibs.
+"""
 import copy
 import random
 import PySimpleGUI as gui
@@ -23,10 +27,12 @@ def should_auto_generate():
             return False
     return True
 
+# I know this isn't good practice, but oh well
 names = read_file_lines("names.txt")
 verbs = read_file_lines("past-tense-verbs.txt")
 adjectives = read_file_lines("adjectives.txt")
 nouns = read_file_lines("nouns.txt")
+animals = read_file_lines("animals.txt")
 def get_random_word(word_type):
     if word_type == "verb":
         return random.choice(verbs)
@@ -34,9 +40,14 @@ def get_random_word(word_type):
         return random.choice(nouns)
     elif word_type == "adjective":
         return random.choice(adjectives)
+    elif word_type == "animal":
+        return random.choice(animals)
     return random.choice(names)
 
 # Return a 2d array containing each word in each sentence
+# ex: [
+#         ["hello", "world!"] # list holding each word in the sentence
+#     ]
 def split_story(story_str):
     story = []
     lines = story_str.strip().split("\n")
@@ -83,11 +94,7 @@ class Story:
             replacement.indexes = get_occurences(self.text, replacement.word)
             self.prompts[key] = replacement
 
-    # Generate the new story by replacing some words with user inputted words
-    # Generate a "weird" version of the story by making each word in the story
-    # uppercase and replacing each 'a' with 'o'
-    # Generate a "reversed" version of the story by making each user inputted word reversed
-    # If words is a empty list, we auto generate, picking random words from text files
+    # If words is an empty list, we auto generate, picking random words from text files
     def generate(self, words):
         auto_generate = len(words) == 0
 
@@ -98,7 +105,10 @@ class Story:
             replacement = self.prompts[key]
             random_words[key] = get_random_word(replacement.word_type)
 
-        # TODO: explain this
+        # Generate the new story by replacing some words with user inputted words
+        # Generate a "weird" version of the story by making each word in the story
+        # uppercase and replacing each 'a' with 'o'
+        # Generate a "reversed" version of the story by making each user inputted word reversed
         self.reversed_text = copy.deepcopy(self.text)
         for key in self.prompts:
             replacement = self.prompts[key]
@@ -170,7 +180,7 @@ replacements = {
     "Person's Last Name": Replacement("Dumpty", "name", ""),
     "Verb (past tense action": Replacement("sat", "verb", ""),
     "Job Title": Replacement("king's", "noun", "'s"),
-    "Animal (plural)": Replacement("horses", "noun", "s")
+    "Animal": Replacement("horses", "animal", "s")
 }
 story1 = Story(humpty_dumpty, replacements, "p1-")
 
@@ -187,11 +197,11 @@ Nine, ten
 A big fat hen
 """
 replacements = {
-    "Noun (footwear)": Replacement("shoe", "noun", ""),
-    "Noun (something inside a house)": Replacement("door", "noun", ""),
-    "Noun": Replacement("sticks", "noun", "s"),
+    "Footwear": Replacement("shoe", "noun", ""),
+    "House item": Replacement("door", "noun", ""),
+    "Object": Replacement("sticks", "noun", "s"),
     "Direction": Replacement("straight", "adjective", ""),
-    "Animal": Replacement("hen", "noun", "")
+    "Creature": Replacement("hen", "animal", "")
 }
 story2 = Story(buckle_my_shoe, replacements, "p0-")
 
