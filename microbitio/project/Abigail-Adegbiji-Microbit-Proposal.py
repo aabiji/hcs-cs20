@@ -1,4 +1,7 @@
 """
+Author: Abigail Adegbiji
+Date: May 11, 2024
+
 Description:
 A recreation of Simon Says. A sequence of images will be shown to
 the player and the player needs to play back those images in the
@@ -52,10 +55,16 @@ loop forever:
                 say "Next level"
 
         say what level it is (ex: "Level 1")
-        determine the length of the sequence based on the level
-        generate a random sequence of images of that length
+        say "Simon Says"
 
-        for each image in our random sequence:
+        determine the length of the sequence based on the level
+
+        generate a random sequence of images of that length:
+            we have 2 different images we could choose from,
+            so just iterate from 0 to the length of the sequence
+            and add a randomly chosen image to our sequence each time
+
+        for each image in our sequence:
             display the image
             pause for however many miliseconds our playback speed is
 
