@@ -1,5 +1,7 @@
 import time
 
+# Maybe read all serial data to see commands? https://pypi.org/project/MicroBitTools/
+
 class MicroBit():
     def __init__(self, repl):
         self.repl = repl
