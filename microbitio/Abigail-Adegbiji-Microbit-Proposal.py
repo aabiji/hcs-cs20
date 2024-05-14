@@ -70,3 +70,22 @@ loop forever:
 
         it's the player's turn now
 """
+
+import microbit
+
+def logo_was_touched():
+    """
+    The "command" were sending to the repl is just python code.
+    Under the hood microbit uses a fork of micropython to compile
+    and execute a subset of python directly.
+    Touch detection of the logo is already implemented in microbit for us.
+    See this commit: https://github.com/bbcmicrobit/micropython/commit/9ddc573245e9ce9f9d6c0b847b6597fece877af9
+    """
+    command = "print(pin_logo.is_touched())"
+    microbit.repl.send_command(command)
+    response = microbit.repl.wait_response()
+    return eval(response) # True or False
+
+while True:
+    if logo_was_touched():
+        print("Touched the logo!")
