@@ -72,6 +72,7 @@ loop forever:
 """
 
 import microbit
+import random
 
 def logo_was_touched():
     """
@@ -86,6 +87,63 @@ def logo_was_touched():
     response = microbit.repl.wait_response()
     return eval(response) # True or False
 
+def generate_sequence(level):
+    images = ["image a", "image b"]
+    sequence = []
+    length = int(0.5 * (2 ** level))
+    for i in range(0, length + 1):
+        sequence.append(random.choice(images))
+    return sequence
+
+# Reset the button caches
+microbit.button_a.was_pressed()
+microbit.button_b.was_pressed()
+
+game_has_started = False
+is_players_turn = False
+player_sequence = []
+our_sequence = []
+playback_speed = 1000
+level = 0
+
+#microbit.display.show("Simon Says. Press the A button to start the game")
+
 while True:
-    if logo_was_touched():
-        print("Touched the logo!")
+    if not game_has_started:
+        if microbit.button_a.was_pressed():
+            game_has_started = True
+        continue
+
+    if is_players_turn:
+        if microbit.button_a.was_pressed():
+            print("display the corresponding image")
+            player_sequence.append("image a")
+
+        if microbit.button_b.was_pressed():
+            print("display the corresponding image")
+            player_sequence.append("image b")
+
+        if logo_was_touched():
+            print("Player's turn is over")
+            is_players_turn = False
+
+    else: # It's our turn
+
+        if len(player_sequence) > 0: # Player inputted a sequence
+            if set(player_sequence) != set(our_sequence):
+                print("Play failure sound effect")
+                microbit.display.show("Game over")
+                level = 0
+                playback_speed = 1000
+            else:
+                print("Play success sound effect")
+                microbit.display.show("Next level")
+                playback_speed -= 50
+                level += 1
+
+        #microbit.display.show(f"Level {level}. Simon Says:")
+
+        our_sequence = generate_sequence(level)
+        for image in our_sequence:
+            microbit.sleep(playback_speed)
+        is_players_turn = True
