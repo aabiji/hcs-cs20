@@ -87,63 +87,81 @@ def logo_was_touched():
     response = microbit.repl.wait_response()
     return eval(response) # True or False
 
-def generate_sequence(level):
-    images = ["image a", "image b"]
+def generate_sequence(level, images):
     sequence = []
-    length = int(0.5 * (2 ** level))
+    length = 2 * level
     for i in range(0, length + 1):
         sequence.append(random.choice(images))
     return sequence
+
+def equals(a, b):
+    if len(a) != len(b):
+        return False
+    for i in range(len(a)):
+        if b[i] != a[i]:
+            return False
+    return True
+
+game_has_started = False
+is_players_turn = False
+
+playback_speed = 1000
+level = 0
+
+our_sequence = []
+player_sequence = []
+possible_images = [microbit.Image.YES, microbit.Image.NO]
 
 # Reset the button caches
 microbit.button_a.was_pressed()
 microbit.button_b.was_pressed()
 
-game_has_started = False
-is_players_turn = False
-player_sequence = []
-our_sequence = []
-playback_speed = 1000
-level = 0
-
-#microbit.display.show("Simon Says. Press the A button to start the game")
+microbit.display.show("Simon Says. Press the A button to start")
 
 while True:
     if not game_has_started:
         if microbit.button_a.was_pressed():
             game_has_started = True
+        microbit.display.clear()
         continue
 
     if is_players_turn:
-        if microbit.button_a.was_pressed():
-            print("display the corresponding image")
-            player_sequence.append("image a")
+        image_index  = -1
 
+        if microbit.button_a.was_pressed():
+            image_index = 0
         if microbit.button_b.was_pressed():
-            print("display the corresponding image")
-            player_sequence.append("image b")
+            image_index = 1
+
+        if image_index != -1:
+            image = possible_images[image_index]
+            microbit.display.show(image)
+            player_sequence.append(image)
 
         if logo_was_touched():
-            print("Player's turn is over")
             is_players_turn = False
 
     else: # It's our turn
 
         if len(player_sequence) > 0: # Player inputted a sequence
-            if set(player_sequence) != set(our_sequence):
+            if not equals(our_sequence, player_sequence):
                 print("Play failure sound effect")
                 microbit.display.show("Game over")
-                level = 0
+                player_sequence = []
                 playback_speed = 1000
+                level = 0
             else:
                 print("Play success sound effect")
-                microbit.display.show("Next level")
-                playback_speed -= 50
+                playback_speed = max(playback_speed - 50, 100)
                 level += 1
 
-        #microbit.display.show(f"Level {level}. Simon Says:")
+        microbit.display.show(f"Level {level}. Simon Says:")
 
-        our_sequence = generate_sequence(level)
+        our_sequence = generate_sequence(level, possible_images)
         for image in our_sequence:
+            microbit.display.show(image)
             microbit.sleep(playback_speed)
+            microbit.display.clear()
+            microbit.sleep(playback_speed)
+
         is_players_turn = True
