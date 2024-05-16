@@ -75,25 +75,29 @@ import microbit
 import random
 
 def logo_was_touched():
-    """
-    The "command" were sending to the repl is just python code.
-    Under the hood microbit uses a fork of micropython to compile
-    and execute a subset of python directly.
-    Touch detection of the logo is already implemented in microbit for us.
-    See this commit: https://github.com/bbcmicrobit/micropython/commit/9ddc573245e9ce9f9d6c0b847b6597fece877af9
-    """
+    # The "command" were sending to the repl is just python code.
+    # Under the hood microbit uses a fork of micropython to compile
+    # and execute a subset of python directly.
+    # Touch detection of the logo is already implemented in microbit for us.
+    # See this commit: https://github.com/bbcmicrobit/micropython/commit/9ddc573245e9ce9f9d6c0b847b6597fece877af9.
+    # So really we just need to run this code: `microbit.pin_logo.is_touched()`
     command = "print(pin_logo.is_touched())"
     microbit.repl.send_command(command)
     response = microbit.repl.wait_response()
     return eval(response) # True or False
 
-def generate_sequence(level, images):
+def generate_sequence_of_images(level, images):
     sequence = []
+    # Difficulty depends on the level. The more
+    # images the player has to remember and play back,
+    # the harder the game is.
     length = 2 * level
     for i in range(0, length + 1):
-        sequence.append(random.choice(images))
+        image = random.choice(images)
+        sequence.append(image)
     return sequence
 
+# Return true if 2 lists are equal in content
 def equals(a, b):
     if len(a) != len(b):
         return False
@@ -105,11 +109,11 @@ def equals(a, b):
 game_has_started = False
 is_players_turn = False
 
-playback_speed = 1000
-level = 0
+playback_speed = 1000 # In milliseconds
+current_level = 0
 
-our_sequence = []
-player_sequence = []
+our_sequence    = [] # Our (microbit) sequence of images
+player_sequence = [] # Player's sequence of images
 possible_images = [microbit.Image.YES, microbit.Image.NO]
 
 # Reset the button caches
@@ -133,11 +137,12 @@ while True:
         if microbit.button_b.was_pressed():
             image_index = 1
 
-        if image_index != -1:
+        if image_index != -1: # The player clicked a button
             image = possible_images[image_index]
             microbit.display.show(image)
             player_sequence.append(image)
 
+        # The player's turn is over when the logo is pressed
         if logo_was_touched():
             is_players_turn = False
 
@@ -147,21 +152,23 @@ while True:
             if not equals(our_sequence, player_sequence):
                 print("Play failure sound effect")
                 microbit.display.show("Game over")
-                player_sequence = []
+                # Reset the playback speed and level
                 playback_speed = 1000
-                level = 0
+                current_level = 0
             else:
                 print("Play success sound effect")
                 playback_speed = max(playback_speed - 50, 100)
-                level += 1
+                current_level += 1
 
-        microbit.display.show(f"Level {level}. Simon Says:")
+        message = f"Level {current_level + 1}. Simon Says:"
+        microbit.display.show(message)
 
-        our_sequence = generate_sequence(level, possible_images)
+        our_sequence = generate_sequence_of_images(current_level, possible_images)
         for image in our_sequence:
             microbit.display.show(image)
             microbit.sleep(playback_speed)
             microbit.display.clear()
             microbit.sleep(playback_speed)
 
+        player_sequence = [] # Reset the player sequence
         is_players_turn = True
