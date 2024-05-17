@@ -74,17 +74,26 @@ loop forever:
 import microbit
 import random
 
-def logo_was_touched():
-    # The "command" were sending to the repl is just python code.
-    # Under the hood microbit uses a fork of micropython to compile
-    # and execute a subset of python directly.
-    # Touch detection of the logo is already implemented in microbit for us.
-    # See this commit: https://github.com/bbcmicrobit/micropython/commit/9ddc573245e9ce9f9d6c0b847b6597fece877af9.
-    # So really we just need to run this code: `microbit.pin_logo.is_touched()`
-    command = "print(pin_logo.is_touched())"
-    microbit.repl.send_command(command)
+# Run python code on the microbit
+# The microbit's repl is implemented here:
+# https://github.com/bbcmicrobit/micropython/blob/3e02466d13ef683fc14e2c3d78dd842d0c837d8d/tools/pyboard.py
+def run_code(code):
+    microbit.repl.send_command(code)
     response = microbit.repl.wait_response()
-    return eval(response) # True or False
+    if len(response) == 0:
+        return None # Nothing to return
+    return eval(response)
+
+# Return True if the microbit logo is touched
+# Touch detection of the logo is already implemented in microbit for us.
+# See this commit: https://github.com/bbcmicrobit/micropython/commit/9ddc573245e9ce9f9d6c0b847b6597fece877af9.
+# So really we just need to run this code: `microbit.pin_logo.is_touched()`
+def logo_was_touched():
+    return run_code("print(pin_logo.is_touched())")
+
+def play_music(note_sequence):
+    code = f"import music\nmusic.play({note_sequence})"
+    run_code(code)
 
 def generate_sequence_of_images(level, images):
     sequence = []
@@ -105,6 +114,8 @@ def equals(a, b):
         if b[i] != a[i]:
             return False
     return True
+
+play_music(['C4:1', 'r:3'])
 
 game_has_started = False
 is_players_turn = False
