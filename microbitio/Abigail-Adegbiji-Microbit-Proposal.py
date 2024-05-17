@@ -77,6 +77,7 @@ import random
 # Run python code on the microbit
 # The microbit's repl is implemented here:
 # https://github.com/bbcmicrobit/micropython/blob/3e02466d13ef683fc14e2c3d78dd842d0c837d8d/tools/pyboard.py
+# Under the hood, microbit uses a fork of micropython to run the code
 def run_code(code):
     microbit.repl.send_command(code)
     response = microbit.repl.wait_response()
@@ -91,8 +92,10 @@ def run_code(code):
 def logo_was_touched():
     return run_code("print(pin_logo.is_touched())")
 
-def play_music(note_sequence):
-    code = f"import music\nmusic.play({note_sequence})"
+# Play a builtin microbit sound effect
+def play_music(sound_effect):
+    real_name = f"music.{sound_effect}"
+    code = f"import music\nset_volume(80)\nmusic.play({real_name})"
     run_code(code)
 
 def generate_sequence_of_images(level, images):
@@ -115,8 +118,6 @@ def equals(a, b):
             return False
     return True
 
-play_music(['C4:1', 'r:3'])
-
 game_has_started = False
 is_players_turn = False
 
@@ -126,6 +127,9 @@ current_level = 0
 our_sequence    = [] # Our (microbit) sequence of images
 player_sequence = [] # Player's sequence of images
 possible_images = [microbit.Image.YES, microbit.Image.NO]
+
+success_sound_effect = "BA_DING"
+failure_sound_effect = "POWER_DOWN"
 
 # Reset the button caches
 microbit.button_a.was_pressed()
@@ -161,14 +165,18 @@ while True:
 
         if len(player_sequence) > 0: # Player inputted a sequence
             if not equals(our_sequence, player_sequence):
-                print("Play failure sound effect")
+                play_music(failure_sound_effect)
                 microbit.display.show("Game over")
+
                 # Reset the playback speed and level
+                player_sequence = [] # Reset the player sequence
                 playback_speed = 1000
                 current_level = 0
+                continue
             else:
-                print("Play success sound effect")
+                play_music(success_sound_effect)
                 playback_speed = max(playback_speed - 50, 100)
+                player_sequence = [] # Reset the player sequence
                 current_level += 1
 
         message = f"Level {current_level + 1}. Simon Says:"
@@ -181,5 +189,4 @@ while True:
             microbit.display.clear()
             microbit.sleep(playback_speed)
 
-        player_sequence = [] # Reset the player sequence
         is_players_turn = True
