@@ -1,6 +1,6 @@
 """
 Author: Abigail Adegbiji
-Date: May 11, 2024
+Date: May 17, 2024
 
 Description:
 A recreation of Simon Says. A sequence of images will be shown to
