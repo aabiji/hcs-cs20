@@ -126,7 +126,7 @@ current_level = 0
 
 our_sequence    = [] # Our (microbit) sequence of images
 player_sequence = [] # Player's sequence of images
-possible_images = [microbit.Image.YES, microbit.Image.NO]
+possible_images = [microbit.Image.YES, microbit.Image.NO] # Images we can choose from
 
 success_sound_effect = "BA_DING"
 failure_sound_effect = "POWER_DOWN"
@@ -138,6 +138,7 @@ microbit.button_b.was_pressed()
 microbit.display.show("Simon Says. Press the A button to start")
 
 while True:
+    # Start the game with the a button
     if not game_has_started:
         if microbit.button_a.was_pressed():
             game_has_started = True
@@ -148,9 +149,9 @@ while True:
         image_index  = -1
 
         if microbit.button_a.was_pressed():
-            image_index = 0
+            image_index = 0 # YES image
         if microbit.button_b.was_pressed():
-            image_index = 1
+            image_index = 1 # NO image
 
         if image_index != -1: # The player clicked a button
             image = possible_images[image_index]
@@ -182,6 +183,7 @@ while True:
         message = f"Level {current_level + 1}. Simon Says:"
         microbit.display.show(message)
 
+        # Show our sequence of images to the player
         our_sequence = generate_sequence_of_images(current_level, possible_images)
         for image in our_sequence:
             microbit.display.show(image)
