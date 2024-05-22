@@ -25,7 +25,6 @@ loop forever:
         start the game
 
     if the game hasn't been started:
-        keep saying "Simon Says. Press the A button to start the game"
         jump to the next iteration of the loop
 
     if it's the player's turn:
@@ -90,11 +89,13 @@ def run_code(code):
 # See this commit: https://github.com/bbcmicrobit/micropython/commit/9ddc573245e9ce9f9d6c0b847b6597fece877af9.
 # So really we just need to run this code: `microbit.pin_logo.is_touched()`
 def logo_was_touched():
+    # Print the value returned by pin_logo.is_touched()
     return run_code("print(pin_logo.is_touched())")
 
 # Play a builtin microbit sound effect
-def play_music(sound_effect):
-    real_name = f"music.{sound_effect}"
+def play_sound_effect(sound_effect_name):
+    real_name = f"music.{sound_effect_name}"
+    # Import musc, set the volume to 80, call the play function, pass in the sound effect name
     code = f"import music\nset_volume(80)\nmusic.play({real_name})"
     run_code(code)
 
@@ -104,10 +105,18 @@ def generate_sequence_of_images(level, images):
     # images the player has to remember and play back,
     # the harder the game is.
     length = 2 * level
+    # Iterate through and append a random image
     for i in range(0, length + 1):
         image = random.choice(images)
         sequence.append(image)
     return sequence
+
+# Quickly show an image to the user
+def flash_image(image, speed):
+    microbit.display.show(image)
+    microbit.sleep(speed)
+    microbit.display.clear()
+    microbit.sleep(speed)
 
 # Return true if 2 lists are equal in content
 def equals(a, b):
@@ -138,7 +147,7 @@ microbit.button_b.was_pressed()
 microbit.display.show("Simon Says. Press the A button to start")
 
 while True:
-    # Start the game with the a button
+    # Start the game with the A button
     if not game_has_started:
         if microbit.button_a.was_pressed():
             game_has_started = True
@@ -146,17 +155,18 @@ while True:
         continue
 
     if is_players_turn:
-        image_index  = -1
+        image_index = -1
 
         if microbit.button_a.was_pressed():
             image_index = 0 # YES image
         if microbit.button_b.was_pressed():
             image_index = 1 # NO image
 
+        # Show the picked image
         if image_index != -1: # The player clicked a button
             image = possible_images[image_index]
-            microbit.display.show(image)
             player_sequence.append(image)
+            flash_image(image, 500)
 
         # The player's turn is over when the logo is pressed
         if logo_was_touched():
@@ -165,8 +175,9 @@ while True:
     else: # It's our turn
 
         if len(player_sequence) > 0: # Player inputted a sequence
+            # Game over if the player's sequence is not the same as ours
             if not equals(our_sequence, player_sequence):
-                play_music(failure_sound_effect)
+                play_sound_effect(failure_sound_effect)
                 microbit.display.show("Game over")
 
                 # Reset the playback speed and level
@@ -175,7 +186,8 @@ while True:
                 current_level = 0
                 continue
             else:
-                play_music(success_sound_effect)
+                # Progress to the next level, decrease the playback speed
+                play_sound_effect(success_sound_effect)
                 playback_speed = max(playback_speed - 50, 100)
                 player_sequence = [] # Reset the player sequence
                 current_level += 1
@@ -186,9 +198,6 @@ while True:
         # Show our sequence of images to the player
         our_sequence = generate_sequence_of_images(current_level, possible_images)
         for image in our_sequence:
-            microbit.display.show(image)
-            microbit.sleep(playback_speed)
-            microbit.display.clear()
-            microbit.sleep(playback_speed)
+            flash_image(image, playback_speed)
 
         is_players_turn = True
