@@ -1,6 +1,6 @@
 """
 Author: Abigail Adegbiji
-Date: May 17, 2024
+Date: May 22, 2024
 
 Description:
 A recreation of Simon Says. A sequence of images will be shown to
@@ -144,6 +144,7 @@ failure_sound_effect = "POWER_DOWN"
 microbit.button_a.was_pressed()
 microbit.button_b.was_pressed()
 
+print("Here's instructions for attaching headphones to microbit: https://www.youtube.com/watch?v=4A-P2a4KFZc")
 microbit.display.show("Simon Says. Press the A button to start")
 
 while True:
