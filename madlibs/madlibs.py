@@ -108,8 +108,6 @@ class Story:
         # Generate the new story by replacing some words with user inputted words
         # Generate a "weird" version of the story by making each word in the story
         # uppercase and replacing each 'a' with 'o'
-        # Generate a "reversed" version of the story by making each user inputted word reversed
-        self.reversed_text = copy.deepcopy(self.text)
         for key in self.prompts:
             replacement = self.prompts[key]
             for index in replacement.indexes:
@@ -119,15 +117,17 @@ class Story:
                 else:
                     word = words[key] + replacement.ending
                 self.text[y][x] = word
-                self.reversed_text[y][x] = word[::-1]
 
         # Make each word uppercase and replace the 'a' with 'o'
+        # Generate a "reversed" version of the story by making each user word reversed
         self.weird_text = copy.deepcopy(self.text)
+        self.reversed_text = copy.deepcopy(self.text)
         for y in range(len(self.weird_text)):
             line = self.weird_text[y]
             for x in range(len(line)):
                 string =  self.weird_text[y][x].replace("a", "o").upper()
                 self.weird_text[y][x] = string
+                self.reversed_text[y][x] = self.reversed_text[y][x][::-1]
 
     def build_ui(self):
         inputs = []
@@ -173,7 +173,7 @@ humpty_dumpty = """
 Humpty Dumpty sat on a wall,
 Humpty Dumpty had a great fall.
 All the king's horses and all the king's men.
-Couldn't put Humpty together again. 
+Couldn't put Humpty together again.
 """
 replacements = {
     "Person's First Name": Replacement("Humpty", "name", ""),
