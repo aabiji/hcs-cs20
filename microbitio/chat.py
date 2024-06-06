@@ -14,11 +14,11 @@ def find_channels(sender, recipient):
         if response != "None":
             user = response.split(":")[0]
             channel = response.split(":")[1]
-            if channel == "Not Found" or user in channels:
+            if channel == "Not Found" or user in users:
                 continue
             if user == recipient or user == sender:
                 users[user] = int(channel)
-                if len(channels.keys()) == 2:
+                if len(users.keys()) == 2:
                     break
         microbit.sleep(1000)
 
@@ -66,7 +66,7 @@ for thread in threads:
     thread.join()
 """
 
-#key = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+#key = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/*-()&^%$#@!~"
 # key needs to be all lowercase
 key = "this tool is used to detect radiation"
 msg = "hello i am having a good day"
