@@ -24,7 +24,9 @@ def find_channels(sender, recipient):
 
     return channels
 
+"""
 microbit.radio.on()
+
 
 # TODO: sender and recipient name validation with regex
 #sender = input("Who are you (first.last)?")
@@ -34,29 +36,23 @@ microbit.radio.on()
 # channels = find_channels(sender, recipient)
 channels = {
     "abigail.adegbiji": 0,
-    "katerina.broten": 13
+    "kevin.riffle": 46
 }
 num = max(channels.values())
 microbit.radio.config(channel=num, group=num)
 
-lock = threading.Lock()
-
 def send():
-    global lock
     while True:
         message = input(">")
-        lock.acquire()
         microbit.radio.send(message)
-        lock.release()
+        microbit.sleep(1000)
 
 def receive():
-    global lock
     while True:
-        lock.acquire()
         message = microbit.radio.receive()
-        lock.release()
         if message != "None":
             print("Received:", message)
+        microbit.sleep(1000)
 
 # Dispatch threads
 threads = [
@@ -68,3 +64,34 @@ for thread in threads:
 
 for thread in threads:
     thread.join()
+"""
+
+#key = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+# key needs to be all lowercase
+key = "this tool is used to detect radiation"
+msg = "hello i am having a good day"
+
+def encrypt(msg, key):
+    key_index = 0
+    encrypted_msg = ""
+    for character in msg:
+        key_char = key[key_index]
+        key_offset = ord(key_char) - 97
+        if key_char == "":
+            key_offset = 26 # Spaces are 26 away from 'a'
+        key_offset += 1
+
+        key_index += 1
+        if key_index >= len(key):
+            key_index = 0
+
+        ascii_char = ord(character) - 97 # TODO: what about capital letters and punctuation???
+        shifted_char = (ascii_char + key_offset) % 27
+        if shifted_char == 26:
+            encrypted_msg += " "
+        else:
+            encrypted_msg += chr(97 + shifted_char)
+
+    return encrypted_msg
+
+print(encrypt(msg, key))
