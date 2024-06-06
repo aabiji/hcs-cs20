@@ -22,7 +22,7 @@ def find_channels(sender, recipient):
                     break
         microbit.sleep(1000)
 
-    return channels
+    return users
 
 """
 microbit.radio.on()
@@ -65,6 +65,12 @@ for thread in threads:
 for thread in threads:
     thread.join()
 """
+
+# a = 0  ; a - z --> 0  - 26
+# A = 27 ; A - Z --> 27 - 53
+# { ' ': 54, '!': 55, '@': 56, '#': 57, '$': 58, '%': 59, '^': 60, '&': 61, '*', 62, '(': 63, ')': 64,
+#   '-': 65, '+': 66, '_': 67', '=': 68, '{': 69, '}': 70, '[': 71, ']': 72, ':': 73, ';': 74, '"': 75,
+#  "'": 76, '\': 77, '|': 78, '`': 79, '~': 80, ',': 81, '<': 82, '.': 83, '>': 84, '/': 85, '?': 86 }
 
 #key = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/*-()&^%$#@!~"
 # key needs to be all lowercase
