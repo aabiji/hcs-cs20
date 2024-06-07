@@ -1,6 +1,6 @@
 # Chat app
-import microbit
-import threading
+#import microbit
+#import threading
 
 # Find the channel you and your recipient is on
 def find_channels(sender, recipient):
@@ -66,38 +66,72 @@ for thread in threads:
     thread.join()
 """
 
-# a = 0  ; a - z --> 0  - 26
-# A = 27 ; A - Z --> 27 - 53
-# { ' ': 54, '!': 55, '@': 56, '#': 57, '$': 58, '%': 59, '^': 60, '&': 61, '*', 62, '(': 63, ')': 64,
-#   '-': 65, '+': 66, '_': 67', '=': 68, '{': 69, '}': 70, '[': 71, ']': 72, ':': 73, ';': 74, '"': 75,
-#  "'": 76, '\': 77, '|': 78, '`': 79, '~': 80, ',': 81, '<': 82, '.': 83, '>': 84, '/': 85, '?': 86 }
+# Get the offset from the letter 'a' to the character, where 'a' is 0
+def get_offset(character):
+    ascii_index = ord(character)
 
-#key = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/*-()&^%$#@!~"
-# key needs to be all lowercase
-key = "this tool is used to detect radiation"
-msg = "hello i am having a good day"
+    # Letters 'a' to 'z', 0 - 26
+    if ascii_index >= 97 and ascii_index <= 122:
+        return ascii_index - 97
 
-def encrypt(msg, key):
+    # Letter 'A' to 'Z', 27 - 53
+    if ascii_index >= 65 and ascii_index <= 90:
+        return ascii_index - 38
+
+    # Every other ascii character, 54 - 86
+    offsets = { ' ': 54, '!': 55, '@' : 56, '#': 57, '$': 58, '%': 59, '^': 60,
+                '&': 61, '*': 62, '(' : 63, ')': 64, '-': 65, '+': 66, '_': 67,
+                '=': 68, '{': 69, '}' : 70, '[': 71, ']': 72, ':': 73, ';': 74,
+                '"': 75, "'": 76, '\\': 77, '|': 78, '`': 79, '~': 80, ',': 81,
+                '<': 82, '.': 83,  '>': 84, '/': 85, '?': 86 }
+    return offsets[character]
+
+# Get the character from the offset going from 0 to 86
+def get_character(offset):
+    if offset <= 26:
+        return chr(offset + 97)
+
+    if offset >= 27 and offset <= 53:
+        return chr(offset + 38)
+
+    characters = { 54: ' ',  55: '!',  56: '@',  57: '#',  58: '$',  59: '%',  60: '^',
+                   61: '&',  62: '*',  63: '(',  64: ')',  65: '-',  66: '+',  67: '_',
+                   68: '=',  69: '{',  70: '}',  71: '[',  72: ']',  73: ':',  74: ';',
+                   75: '"',  76: "'",  77: '\\', 78: '|',  79: '`',  80: '~',  81: ',',
+                   82: '<',  83: '.',  84: '>',  85: '/',  86: '?' }
+    return characters[offset]
+
+def process(msg, key, encrypt):
+    max_offset = 87
     key_index = 0
-    encrypted_msg = ""
+    new_msg = ""
+
     for character in msg:
-        key_char = key[key_index]
-        key_offset = ord(key_char) - 97
-        if key_char == "":
-            key_offset = 26 # Spaces are 26 away from 'a'
-        key_offset += 1
+        key_offset = get_offset(key[key_index])
 
         key_index += 1
         if key_index >= len(key):
             key_index = 0
 
-        ascii_char = ord(character) - 97 # TODO: what about capital letters and punctuation???
-        shifted_char = (ascii_char + key_offset) % 27
-        if shifted_char == 26:
-            encrypted_msg += " "
-        else:
-            encrypted_msg += chr(97 + shifted_char)
+        # Shift the character in the message by the
+        # offset of the corresponding character in the key
+        # If we're encrypting, we shift forwards to get a
+        # substituted character. If we're decrypting,
+        # we shift backwards to get our original character
+        char_offset = get_offset(character)
+        shifted_char = char_offset + key_offset
+        if encrypt == False:
+            shifted_char = char_offset - key_offset
 
-    return encrypted_msg
+        # Make the shifted character within the range of 0 to 86
+        shifted_char %= max_offset
+        new_msg += get_character(shifted_char)
 
-print(encrypt(msg, key))
+    return new_msg
+
+# 75 character key
+key = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/*-()&^%$#@!~"
+msg = "hello world! how are you doing today?"
+
+encrypted = process(msg, key, encrypt=True)
+decrypted = process(encrypted, key, encrypt=False)
