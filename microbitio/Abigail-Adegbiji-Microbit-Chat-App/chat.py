@@ -141,9 +141,17 @@ chats = connect_to_user(sender, chats, -1)
 key = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/*-()&^%$#@!~"
 
 def change_recipient(user):
-    global recipient, chats
+    global recipient, chats, messages
     current_recipient = user
     chats = connect_to_user(current_recipient, chats, chats[sender].channel)
+
+    # Clear the messages element
+    for child in messages.winfo_children():
+        child.destroy()
+
+    # Populate with the corresponding messages sent
+    for msg in chats[current_recipient].messages:
+        add_message_element(messages, msg.text, msg.sent_by_user)
 
 app = ttk.Window(size=(600, 600))
 
@@ -164,9 +172,12 @@ messages = ScrolledFrame(app, width=600, height=600, autohide=True, padding=10)
 messages.pack(side=RIGHT)
 
 def send_message(event):
-    global messages, input_text, key
+    global messages, input_text, key, current_recipient
     encrypted = process(input_text.get(), key, encrypt=True)
     microbit.radio.send(encrypted)
+
+    msg = Message(True, input_text.get())
+    chats[current_recipient].messages.append(msg)
 
     add_message_element(messages, input_text.get(), True)
     messages.update_idletasks()
