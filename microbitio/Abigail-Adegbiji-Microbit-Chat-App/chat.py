@@ -2,70 +2,6 @@
 #import microbit
 #import threading
 
-# Find the channel you and your recipient is on
-def find_channels(sender, recipient):
-    microbit.radio.config(channel=1, group=1, queue=10, length=251)
-    users = {}
-
-    while True:
-        request = f"GET_GROUP:{recipient}"
-        microbit.radio.send(request)
-        response = microbit.radio.receive()
-        if response != "None":
-            user = response.split(":")[0]
-            channel = response.split(":")[1]
-            if channel == "Not Found" or user in users:
-                continue
-            if user == recipient or user == sender:
-                users[user] = int(channel)
-                if len(users.keys()) == 2:
-                    break
-        microbit.sleep(1000)
-
-    return users
-
-"""
-microbit.radio.on()
-
-
-# TODO: sender and recipient name validation with regex
-#sender = input("Who are you (first.last)?")
-#recipient = input("Who do you want to talk to (first.last)?")
-
-# Connect on the larger of the two group ids
-# channels = find_channels(sender, recipient)
-channels = {
-    "abigail.adegbiji": 0,
-    "kevin.riffle": 46
-}
-num = max(channels.values())
-microbit.radio.config(channel=num, group=num)
-
-def send():
-    while True:
-        message = input(">")
-        microbit.radio.send(message)
-        microbit.sleep(1000)
-
-def receive():
-    while True:
-        message = microbit.radio.receive()
-        if message != "None":
-            print("Received:", message)
-        microbit.sleep(1000)
-
-# Dispatch threads
-threads = [
-    threading.Thread(target=send, args=()),
-    threading.Thread(target=receive, args=())
-]
-for thread in threads:
-    thread.start()
-
-for thread in threads:
-    thread.join()
-"""
-
 # Get the offset from the letter 'a' to the character, where 'a' is 0
 def get_offset(character):
     ascii_index = ord(character)
@@ -129,9 +65,71 @@ def process(msg, key, encrypt):
 
     return new_msg
 
+# Find the channel and group the user is on
+# Return -1 to signal an error
+def find_user_channel(user):
+    microbit.radio.config(channel=1, group=1, queue=10, length=251)
+
+    while True:
+        request = f"GET_GROUP:{user}"
+        microbit.radio.send(request)
+        response = microbit.radio.receive()
+        if response != "None":
+            user_id = response.split(":")[0]
+            channel = response.split(":")[1]
+            if channel == "Not found":
+                return -1
+            if user_id == user:
+                return int(channel)
+        microbit.sleep(1000)
+
+def connect_to_user(user, users, current_channel):
+    # Only do user lookup if the user's channel isn't already cached
+    if user not in users:
+        users[user] = find_user_channel(user)
+
+    # The channel we'll connect to needs to be the bigger one
+    channel = users[user]
+    if current_channel > channel:
+        channel = current_channel
+
+    microbit.radio.config(channel=channel, group=channel)
+    return users
+
+def send(encryption_key):
+    while True:
+        message = input(">")
+        encrypted = process(message, encryption_key, encrypt=True)
+        microbit.radio.send(encrypted)
+        microbit.sleep(1000)
+
+def receive(decryption_key):
+    while True:
+        message = microbit.radio.receive()
+        if message != "None":
+            decrypted = process(message, decryption_key, encrypt=False)
+            print("Received:", decrypted)
+        microbit.sleep(1000)
+
+microbit.radio.on()
+
+me = "abigail.adegbiji"
+users = connect_to_user(me, {}, 0)
+users = connect_to_user("kevin.riffle", users, users[me])
+
 # 75 character key
 key = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/*-()&^%$#@!~"
-msg = "hello world! how are you doing today?"
 
-encrypted = process(msg, key, encrypt=True)
-decrypted = process(encrypted, key, encrypt=False)
+send_thread = threading.Thread(target=send, args=(key,))
+recv_thread = threading.Thread(target=send, args=(key,))
+
+send_thread.start()
+recv_thread.start()
+
+# Wait for the threads to finish (they never actually do)
+send_thread.join()
+recv_thread.join()
+
+# TODO: sender and recipient name validation with regex
+#sender = input("Who are you (first.last)?")
+#recipient = input("Who do you want to talk to (first.last)?")
