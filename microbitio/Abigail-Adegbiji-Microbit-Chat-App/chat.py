@@ -1,6 +1,10 @@
 # Chat app
 #import microbit
 #import threading
+import tkinter as tk
+import ttkbootstrap as ttk
+from ttkbootstrap.constants import *
+from ttkbootstrap.scrolled import ScrolledFrame
 
 # Get the offset from the letter 'a' to the character, where 'a' is 0
 def get_offset(character):
@@ -132,21 +136,46 @@ send_thread.join()
 recv_thread.join()
 """
 
-import ttkbootstrap as ttk
-from ttkbootstrap.constants import *
+def add_message_element(container, text, sent_by_user):
+    style = "inverse-light" if sent_by_you else "inverse-primary"
+    align_direction = W if sent_by_user else E
+    label = ttk.Label(container, text=text, bootstyle=style, font=("Arial", 12))
+    label.pack(anchor=align_direction, padx=10, pady=10)
 
-root = ttk.Window(themename="litera")
+app = ttk.Window(size=(600, 600))
 
-prompt = ttk.Entry()
-prompt.pack()
+users_list = ScrolledFrame(app, width=200, autohide=True)
+users_list.pack(side=LEFT, fill=BOTH, expand=NO)
 
-send_button = ttk.Button(root, text="Send")
-send_button.pack()
+def change_user():
+    print("changing...")
 
-user_name = ttk.Label(root, text="abigail.adegbiji")
-user_name.grid(row = 0, column = 0)
+with open("users.txt", "r") as file:
+    for line in file.read().split("\n"):
+        button = ttk.Button(users_list, text=line, bootstyle="light", width=150, command=change_user)
+        button.pack(anchor=W)
 
-user_name1 = ttk.Label(root, text="kevin.riffle")
-user_name1.grid(row = 1, column = 0)
+prompt = ttk.Entry(width=200)
+prompt.pack(side=BOTTOM, anchor=W)
 
-root.mainloop()
+def clear_frame(frame):
+    for child in frame.winfo_children():
+        child.destroy()
+
+messages = ScrolledFrame(app, width=600, height=600, autohide=True, padding=10)
+messages.pack(side=RIGHT)
+
+def send_message(event):
+    global messages
+    add_message_element(messages, "hello world!", True)
+    messages.update_idletasks()
+    messages.yview_moveto(5.0)
+prompt.bind("<Return>", send_message)
+
+sent_by_you = True
+for _ in range(20):
+    text = "hello world"
+    add_message_element(messages, text, sent_by_you)
+    sent_by_you = not sent_by_you
+
+app.mainloop()
