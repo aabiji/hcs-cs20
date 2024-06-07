@@ -111,6 +111,7 @@ def receive(decryption_key):
             print("Received:", decrypted)
         microbit.sleep(1000)
 
+"""
 microbit.radio.on()
 
 me = "abigail.adegbiji"
@@ -129,7 +130,23 @@ recv_thread.start()
 # Wait for the threads to finish (they never actually do)
 send_thread.join()
 recv_thread.join()
+"""
 
-# TODO: sender and recipient name validation with regex
-#sender = input("Who are you (first.last)?")
-#recipient = input("Who do you want to talk to (first.last)?")
+import ttkbootstrap as ttk
+from ttkbootstrap.constants import *
+
+root = ttk.Window(themename="litera")
+
+prompt = ttk.Entry()
+prompt.pack()
+
+send_button = ttk.Button(root, text="Send")
+send_button.pack()
+
+user_name = ttk.Label(root, text="abigail.adegbiji")
+user_name.grid(row = 0, column = 0)
+
+user_name1 = ttk.Label(root, text="kevin.riffle")
+user_name1.grid(row = 1, column = 0)
+
+root.mainloop()
