@@ -69,6 +69,11 @@ def process(msg, key, encrypt):
 
     return new_msg
 
+# Return a list of all the users on the GNS
+def load_user_base():
+    with open("users.txt", "r") as file:
+        return file.read().split("\n")
+
 # Find the channel and group the user is on
 # Return -1 to signal an error
 def find_user_channel(user):
@@ -147,13 +152,13 @@ app = ttk.Window(size=(600, 600))
 users_list = ScrolledFrame(app, width=200, autohide=True)
 users_list.pack(side=LEFT, fill=BOTH, expand=NO)
 
-def change_user():
-    print("changing...")
+def change_user(user):
+    print(f"changing... {user}")
 
-with open("users.txt", "r") as file:
-    for line in file.read().split("\n"):
-        button = ttk.Button(users_list, text=line, bootstyle="light", width=150, command=change_user)
-        button.pack(anchor=W)
+users = load_user_base()
+for user in users:
+    button = ttk.Button(users_list, text=user, bootstyle="light", width=150, command=lambda x=user : change_user(x))
+    button.pack(anchor=W)
 
 prompt = ttk.Entry(width=200)
 prompt.pack(side=BOTTOM, anchor=W)
