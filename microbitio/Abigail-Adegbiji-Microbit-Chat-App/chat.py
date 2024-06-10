@@ -4,6 +4,9 @@ import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 from ttkbootstrap.scrolled import ScrolledFrame
 
+# TODO: receive threads and connect thread
+# TODO: refactor -- almost done
+
 microbit.radio.on()
 
 # Get the offset from the letter 'a' to the character, where 'a' is 0
@@ -41,6 +44,7 @@ def get_character(offset):
                    82: '<',  83: '.',  84: '>',  85: '/',  86: '?' }
     return characters[offset]
 
+# Encrypt or decrypt a message based on an encryption key
 def process(msg, key, encrypt):
     max_offset = 87
     key_index = 0
@@ -74,114 +78,120 @@ class Message:
         self.text = text
         self.sent_by_user = sent_by_user
 
-class Chat:
+class Connection:
     def __init__(self):
         self.channel = -1
         self.messages = []
 
-# Return a hashmap that maps all the users on the GNS
-# to chat data
-def load_user_base():
-    chat = {}
-    with open("users.txt", "r") as file:
-        for line in file.read().split("\n"):
-            chat[line] = Chat()
-    return chat
+class Messager:
+    def __init__(self):
+        self.connections = {} # Map user ids to connections
+        self.encryption_key = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/*-()&^%$#@!~"
+        self.current_recipient = ""
+        self.current_channel = 0
 
-# Find the channel and group the user is on
-# Return -1 to signal an error
-def find_user_channel(user):
-    microbit.radio.config(channel=1, group=1, queue=10, length=251)
+    # Return a hashmap that maps all the users on the GNS
+    # to chat data
+    def load_user_base(self):
+        with open("users.txt", "r") as file:
+            for line in file.read().split("\n"):
+                self.connections[line] = Connection()
 
-    while True:
-        request = f"GET_GROUP:{user}"
-        microbit.radio.send(request)
-        response = microbit.radio.receive()
-        if response != "None":
-            user_id = response.split(":")[0]
-            channel = response.split(":")[1]
-            if channel == "Not found":
-                return -1
-            if user_id == user:
-                return int(channel)
-    microbit.sleep(1000)
+    # Find the channel and group the user is on
+    # Return -1 to signal an error
+    def find_user_channel(self, user):
+        microbit.radio.config(channel=1, group=1, queue=10, length=251)
+        while True:
+            request = f"GET_GROUP:{user}"
+            microbit.radio.send(request)
+            response = microbit.radio.receive()
+            if response != "None":
+                user_id = response.split(":")[0]
+                channel = response.split(":")[1]
+                if channel == "Not found":
+                    return -1
+                if user_id == user:
+                    return int(channel)
+            microbit.sleep(1000)
 
-def connect_to_user(user, chats, current_channel):
-    # Only do user lookup if the user's channel isn't already cached
-    if user not in chats or chats[user].channel == -1:
-        chats[user].channel = find_user_channel(user)
+    def connect_to_user(self, user):
+        # Only do user lookup if the user's channel isn't already cached
+        if user not in self.connections or self.connections[user].channel == -1:
+            self.connections[user].channel = self.find_user_channel(user)
 
-    # The channel we'll connect to needs to be the bigger one
-    channel = chats[user].channel
-    if current_channel > channel:
-        channel = current_channel
+        # The channel we'll connect to needs to be the bigger one
+        channel = self.connections[user].channel
+        if self.current_channel > channel:
+            channel = self.current_channel
+        else:
+            self.current_channel = channel
 
-    microbit.radio.config(channel=channel, group=channel)
-    return chats
+        microbit.radio.config(channel=channel, group=channel)
 
-def add_message_element(container, text, sent_by_user):
-    style = "inverse-light" if sent_by_user else "inverse-primary"
-    align_direction = W if sent_by_user else E
-    label = ttk.Label(container, text=text, bootstyle=style, font=("Arial", 12))
-    label.pack(anchor=align_direction, padx=10, pady=10)
+    def change_recipient(self, user):
+        self.current_recipient = user
+        self.connect_to_user(self.current_recipient)
 
-def load_chat_ui(container, chat):
-    # Clear the container
-    for child in container.winfo_children():
-        child.destroy()
+    def send_message(self, text):
+        encrypted = process(text, self.encryption_key, encrypt=True)
+        microbit.radio.send(encrypted)
 
-    for msg in chat.messages:
-        add_message_element(container, msg.input_text, msg.sent_by_user)
+        msg = Message(True, encrypted)
+        self.connections[self.current_recipient].messages.append(msg)
 
-sender = "abigail.adegbiji"
-current_recipient = ""
-chats = load_user_base()
-chats = connect_to_user(sender, chats, -1)
-# 75 bit key
-key = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/*-()&^%$#@!~"
+    def get_current_messages(self):
+        return self.connections[self.current_recipient].messages
 
-def change_recipient(user):
-    global recipient, chats, messages
-    current_recipient = user
-    chats = connect_to_user(current_recipient, chats, chats[sender].channel)
+class App:
+    def __init__(self):
+        self.messanger = Messager()
+        self.message_container = None
 
-    # Clear the messages element
-    for child in messages.winfo_children():
-        child.destroy()
+    def add_message_element(self, container, text, sent_by_user):
+        style = "inverse-light" if sent_by_user else "inverse-primary"
+        align_direction = W if sent_by_user else E
+        label = ttk.Label(container, text=text, bootstyle=style, font=("Arial", 12))
+        label.pack(anchor=align_direction, padx=10, pady=10)
 
-    # Populate with the corresponding messages sent
-    for msg in chats[current_recipient].messages:
-        add_message_element(messages, msg.text, msg.sent_by_user)
+    def change_recipient(self, user):
+        self.messanger.connect_to_user(user)
 
-app = ttk.Window(size=(600, 600))
+        # Clear the container
+        for child in self.message_container.winfo_children():
+            child.destroy()
 
-# Sidebar of users
-users_list = ScrolledFrame(app, width=200, autohide=True)
-users_list.pack(side=LEFT, fill=BOTH, expand=NO)
-for user in chats:
-    button = ttk.Button(users_list, text=user, bootstyle="light", width=150, command=lambda x=user : change_recipient(x))
-    button.pack(anchor=W)
+        for msg in self.messanger.get_current_messages():
+            self.add_message_element(self.message_container, msg.input_text, msg.sent_by_user)
 
-# Message input
-input_text = tk.StringVar(app)
-prompt = ttk.Entry(width=200, textvariable=input_text)
-prompt.pack(side=BOTTOM, anchor=W)
+    app = ttk.Window(size=(600, 600))
 
-# List of chat messages
-messages = ScrolledFrame(app, width=600, height=600, autohide=True, padding=10)
-messages.pack(side=RIGHT)
+    # Sidebar of users
+    users_list = ScrolledFrame(app, width=200, autohide=True)
+    users_list.pack(side=LEFT, fill=BOTH, expand=NO)
+    for user in chats:
+        button = ttk.Button(users_list, text=user, bootstyle="light", width=150, command=lambda x=user : change_recipient(x))
+        button.pack(anchor=W)
 
-def send_message(event):
-    global messages, input_text, key, current_recipient
-    encrypted = process(input_text.get(), key, encrypt=True)
-    microbit.radio.send(encrypted)
+    # Message input
+    input_text = tk.StringVar(app)
+    prompt = ttk.Entry(width=200, textvariable=input_text)
+    prompt.pack(side=BOTTOM, anchor=W)
 
-    msg = Message(True, input_text.get())
-    chats[current_recipient].messages.append(msg)
+    # List of chat messages
+    messages = ScrolledFrame(app, width=600, height=600, autohide=True, padding=10)
+    messages.pack(side=RIGHT)
 
-    add_message_element(messages, input_text.get(), True)
-    messages.update_idletasks()
-    messages.yview_moveto(5.0)
-prompt.bind("<Return>", send_message)
+    def send_message(event):
+        global messages, input_text, key, current_recipient
+        encrypted = process(input_text.get(), key, encrypt=True)
+        microbit.radio.send(encrypted)
 
-app.mainloop()
+        msg = Message(True, input_text.get())
+        chats[current_recipient].messages.append(msg)
+
+        add_message_element(messages, input_text.get(), True)
+        messages.update_idletasks()
+        messages.yview_moveto(5.0)
+    prompt.bind("<Return>", send_message)
+
+    app.mainloop()
