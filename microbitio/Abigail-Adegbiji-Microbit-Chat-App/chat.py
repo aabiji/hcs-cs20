@@ -1,8 +1,10 @@
 import microbit
+import threading
 import tkinter as tk
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 from ttkbootstrap.scrolled import ScrolledFrame
+import re
 
 microbit.radio.on()
 
@@ -122,6 +124,8 @@ class Messager:
             microbit.sleep(1000)
 
     def connect_to_user(self, user):
+        self.current_recipient = user
+
         # Only do user lookup if the user's channel isn't already cached
         if user not in self.connections or self.connections[user].channel == -1:
             self.connections[user].channel = self.find_user_channel(user)
@@ -147,22 +151,29 @@ class Messager:
         msg = Message(True, encrypted)
         self.connections[self.current_recipient].messages.append(msg)
 
-    # TODO: spawn thread for this
-    def receive_messages(self):
-        while True:
-            response = microbit.radio.receive()
-            if response != "None":
-                decrypted = process(response, self.encryption_key, encrypt=False)
-                msg = Message(False, decrypted)
-                self.connections[self.current_recipient].messages.append(msg)
-            microbit.sleep(1000)
+    # Return the message if we receive it
+    def receive_message(self):
+        response = microbit.radio.receive()
+        if response != "None":
+            # Ignore messages that follow the firstname.lastname:id pattern
+            user_info_pattern = re.compile(".+:.*")
+            if user_info_pattern.match(response):
+                return None
+
+            decrypted = process(response, self.encryption_key, encrypt=False)
+            msg = Message(False, decrypted)
+            self.connections[self.current_recipient].messages.append(msg)
+            return msg
+        return None
 
     def get_current_messages(self):
         return self.connections[self.current_recipient].messages
 
 class App:
-    def __init__(self):
+    def __init__(self, sender):
         self.messanger = Messager()
+        self.messanger.load_user_base()
+        self.messanger.connect_to_user(sender)
 
         self.root = ttk.Window(size=(600, 600))
 
@@ -172,7 +183,7 @@ class App:
 
         # Input box for typing in message
         self.text_input = tk.StringVar(self.root)
-        self.message_prompt = ttk.Entry(width=200, textvariable=input_text)
+        self.message_prompt = ttk.Entry(width=200, textvariable=self.text_input)
         self.message_prompt.pack(side=BOTTOM, anchor=W)
         self.message_prompt.bind("<Return>", self.send_message)
 
@@ -194,16 +205,24 @@ class App:
             child.destroy()
 
         for msg in self.messanger.get_current_messages():
-            self.add_message_element(self.messages_container, msg.input_text, msg.sent_by_user)
+            self.add_message_element(msg.text, msg.sent_by_user)
 
-    def send_message(self):
-        self.messanger.send_message(self.text_input.get())
-
-        self.add_message_element(self.text_input.get(), True)
-
+    def add_message(self, text, sent_by_user):
+        self.add_message_element(text, sent_by_user)
         # Scroll the container down to the end after a new element is added
         self.messages_container.update_idletasks()
         self.messages_container.yview_moveto(5.0)
+
+    def send_message(self, events):
+        self.messanger.send_message(self.text_input.get())
+        self.add_message(self.text_input.get(), True)
+
+    def receive_messages(self):
+        while True:
+            msg = self.messanger.receive_message()
+            if msg != None:
+                self.add_message(msg.text, False)
+            microbit.sleep(1000)
 
     def run(self):
         for user in self.messanger.connections:
@@ -211,7 +230,13 @@ class App:
                                 width=150, command=lambda x=user : self.change_recipient(x))
             button.pack(anchor=W)
 
-        app.mainloop()
+        # Receive messages on a separate thread
+        thread = threading.Thread(target=self.receive_messages, args=())
+        thread.start()
 
-app = App()
+        self.root.mainloop()
+        thread.join()
+
+me = "abigail.adegbiji"
+app = App(me)
 app.run()
