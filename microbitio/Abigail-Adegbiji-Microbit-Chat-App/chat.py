@@ -25,7 +25,9 @@ def get_offset(character):
                 '&': 61, '*': 62, '(' : 63, ')': 64, '-': 65, '+': 66, '_': 67,
                 '=': 68, '{': 69, '}' : 70, '[': 71, ']': 72, ':': 73, ';': 74,
                 '"': 75, "'": 76, '\\': 77, '|': 78, '`': 79, '~': 80, ',': 81,
-                '<': 82, '.': 83,  '>': 84, '/': 85, '?': 86 }
+                '<': 82, '.': 83, '>':  84, '/': 85, '?': 86, '0': 87, '1': 88,
+                '2': 89, '3': 90, '4':  91, '5': 92, '6': 93, '7': 94, '8': 95,
+                '9': 96 }
     return offsets[character]
 
 # Get the character from the offset going from 0 to 86
@@ -36,11 +38,13 @@ def get_character(offset):
     if offset >= 27 and offset <= 53:
         return chr(offset + 38)
 
-    characters = { 54: ' ',  55: '!',  56: '@',  57: '#',  58: '$',  59: '%',  60: '^',
-                   61: '&',  62: '*',  63: '(',  64: ')',  65: '-',  66: '+',  67: '_',
-                   68: '=',  69: '{',  70: '}',  71: '[',  72: ']',  73: ':',  74: ';',
-                   75: '"',  76: "'",  77: '\\', 78: '|',  79: '`',  80: '~',  81: ',',
-                   82: '<',  83: '.',  84: '>',  85: '/',  86: '?' }
+    characters = { 54: ' ', 55: '!', 56: '@',  57: '#', 58: '$', 59: '%', 60: '^',
+                   61: '&', 62: '*', 63: '(',  64: ')', 65: '-', 66: '+', 67: '_',
+                   68: '=', 69: '{', 70: '}',  71: '[', 72: ']', 73: ':', 74: ';',
+                   75: '"', 76: "'", 77: '\\', 78: '|', 79: '`', 80: '~', 81: ',',
+                   82: '<', 83: '.', 84: '>',  85: '/', 86: '?', 87: '0', 88: '1',
+                   89: '2', 90: '3', 91: '4',  92: '5', 93: '6', 94: '7', 95: '8',
+                   96: '9'}
     return characters[offset]
 
 # Encrypt or decrypt a message based on an encryption key
@@ -123,7 +127,7 @@ class Messager:
                     return -1
                 if user_id == user:
                     return int(channel)
-            microbit.sleep(1000)
+            microbit.sleep(100)
 
     def connect_to_user(self, user):
         self.current_recipient = user
@@ -186,7 +190,7 @@ class App:
 
         self.text_input = tk.StringVar(self.root)
         self.message_prompt = ttk.Entry(self.prompt_container,
-                                        width=40,
+                                        width=41,
                                         textvariable=self.text_input)
 
         # Send button
