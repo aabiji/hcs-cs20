@@ -150,7 +150,7 @@ class Messager:
         encrypted = process(text, self.encryption_key, encrypt=True)
         microbit.radio.send(encrypted)
 
-        msg = Message(True, encrypted)
+        msg = Message(True, text)
         self.connections[self.current_recipient].messages.append(msg)
 
     # Return the message if we receive it
@@ -185,20 +185,27 @@ class App:
         self.prompt_container = ttk.Frame(self.root, width=400, height=40, padding=0)
 
         self.text_input = tk.StringVar(self.root)
-        self.message_prompt = ttk.Entry(self.prompt_container, width=41, textvariable=self.text_input)
+        self.message_prompt = ttk.Entry(self.prompt_container,
+                                        width=40,
+                                        textvariable=self.text_input)
 
         # Send button
         self.send_button = ttk.Button(self.prompt_container, text="Send")
 
         # Container that holds a list of message elements
-        self.messages_container = ScrolledFrame(self.root, width=600, height=600, autohide=True, padding=10)
+        self.messages_container = ScrolledFrame(self.root, width=600,
+                                                height=600, autohide=True, padding=10)
 
         self.previous_button_element = None
 
     def add_message_element(self, text, sent_by_user):
+        # Messages sent by us are grey, messages sent by the recipient are blue
         style = "inverse-light" if sent_by_user else "inverse-primary"
+        # Messages sent by us are on the left, messages sent by the recipient are on the right
         align_direction = W if sent_by_user else E
-        label = ttk.Label(self.messages_container, text=text, bootstyle=style, font=("Arial", 12))
+
+        label = ttk.Label(self.messages_container, text=text,
+                          bootstyle=style, font=("Arial", 12))
         label.pack(anchor=align_direction, padx=10, pady=10)
 
     def change_recipient(self, user, button):
@@ -218,7 +225,7 @@ class App:
         self.previous_button_element = button
         button.configure(bootstyle="primary")
 
-    def send_message(self, events):
+    def send_message(self, _events):
         self.messanger.send_message(self.text_input.get())
         self.add_message(self.text_input.get(), True)
 
@@ -243,6 +250,7 @@ class App:
             button.configure(command=lambda x=user, b=button : self.change_recipient(x, b))
             button.pack(anchor=W)
 
+        # Show the different ui components
         self.message_prompt.pack(side=LEFT, anchor=W)
         self.message_prompt.bind("<Return>", self.send_message)
 
@@ -260,6 +268,6 @@ class App:
         self.root.mainloop()
         thread.join()
 
-me = "abigail.adegbiji"
-app = App(me)
+user = input("Who are you?")
+app = App(user)
 app.run()
