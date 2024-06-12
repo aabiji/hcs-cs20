@@ -98,6 +98,8 @@ class Messager:
         # Current channel we're using to communicate
         self.current_channel = 0
 
+        self.load_user_base()
+
     # Return a hashmap that maps all the users on the GNS
     # to chat data
     def load_user_base(self):
@@ -172,24 +174,26 @@ class Messager:
 class App:
     def __init__(self, sender):
         self.messanger = Messager()
-        self.messanger.load_user_base()
         self.messanger.connect_to_user(sender)
 
-        self.root = ttk.Window(size=(600, 600))
+        self.root = ttk.Window(size=(600, 600), resizable=(False, False))
 
         # Sidebar of users
         self.users_list_container = ScrolledFrame(self.root, width=200, autohide=True)
-        self.users_list_container.pack(side=LEFT, fill=BOTH, expand=NO)
 
         # Input box for typing in message
+        self.prompt_container = ttk.Frame(self.root, width=400, height=40, padding=0)
+
         self.text_input = tk.StringVar(self.root)
-        self.message_prompt = ttk.Entry(width=200, textvariable=self.text_input)
-        self.message_prompt.pack(side=BOTTOM, anchor=W)
-        self.message_prompt.bind("<Return>", self.send_message)
+        self.message_prompt = ttk.Entry(self.prompt_container, width=41, textvariable=self.text_input)
+
+        # Send button
+        self.send_button = ttk.Button(self.prompt_container, text="Send")
 
         # Container that holds a list of message elements
         self.messages_container = ScrolledFrame(self.root, width=600, height=600, autohide=True, padding=10)
-        self.messages_container.pack(side=RIGHT)
+
+        self.previous_button_element = None
 
     def add_message_element(self, text, sent_by_user):
         style = "inverse-light" if sent_by_user else "inverse-primary"
@@ -197,25 +201,32 @@ class App:
         label = ttk.Label(self.messages_container, text=text, bootstyle=style, font=("Arial", 12))
         label.pack(anchor=align_direction, padx=10, pady=10)
 
-    def change_recipient(self, user):
+    def change_recipient(self, user, button):
         self.messanger.connect_to_user(user)
 
-        # Clear the container
+        # Clear the container and repopulate the messages container with
+        # messages between the sernder and recipient
         for child in self.messages_container.winfo_children():
             child.destroy()
 
         for msg in self.messanger.get_current_messages():
             self.add_message_element(msg.text, msg.sent_by_user)
 
+        # Highlight the current recipient
+        if self.previous_button_element != None:
+            self.previous_button_element.configure(bootstyle="light")
+        self.previous_button_element = button
+        button.configure(bootstyle="primary")
+
+    def send_message(self, events):
+        self.messanger.send_message(self.text_input.get())
+        self.add_message(self.text_input.get(), True)
+
     def add_message(self, text, sent_by_user):
         self.add_message_element(text, sent_by_user)
         # Scroll the container down to the end after a new element is added
         self.messages_container.update_idletasks()
         self.messages_container.yview_moveto(5.0)
-
-    def send_message(self, events):
-        self.messanger.send_message(self.text_input.get())
-        self.add_message(self.text_input.get(), True)
 
     def receive_messages(self):
         while True:
@@ -225,10 +236,22 @@ class App:
             microbit.sleep(1000)
 
     def run(self):
+        # Populate the side bar with all the users on the gns
+        self.users_list_container.pack(side=LEFT, fill=BOTH, expand=NO)
         for user in self.messanger.connections:
-            button = ttk.Button(self.users_list_container, text=user, bootstyle="light",
-                                width=150, command=lambda x=user : self.change_recipient(x))
+            button = ttk.Button(self.users_list_container, text=user, bootstyle="light", width=150)
+            button.configure(command=lambda x=user, b=button : self.change_recipient(x, b))
             button.pack(anchor=W)
+
+        self.message_prompt.pack(side=LEFT, anchor=W)
+        self.message_prompt.bind("<Return>", self.send_message)
+
+        self.send_button.pack(side=LEFT, anchor=E)
+        self.send_button.configure(command=lambda : self.send_message(None))
+
+        self.prompt_container.pack(side=BOTTOM, fill=X)
+
+        self.messages_container.pack(side=RIGHT)
 
         # Receive messages on a separate thread
         thread = threading.Thread(target=self.receive_messages, args=())
