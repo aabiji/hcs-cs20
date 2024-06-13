@@ -127,7 +127,7 @@ class Messager:
                     return -1
                 if user_id == user:
                     return int(channel)
-            microbit.sleep(100)
+            microbit.sleep(200)
 
     def connect_to_user(self, user):
         self.current_recipient = user
@@ -181,6 +181,7 @@ class App:
         self.messanger.connect_to_user(sender)
 
         self.root = ttk.Window(size=(600, 600), resizable=(False, False))
+        self.root.title(f"MicroChat {sender}")
 
         # Sidebar of users
         self.users_list_container = ScrolledFrame(self.root, width=200, autohide=True)
@@ -190,7 +191,7 @@ class App:
 
         self.text_input = tk.StringVar(self.root)
         self.message_prompt = ttk.Entry(self.prompt_container,
-                                        width=41,
+                                        width=50,
                                         textvariable=self.text_input)
 
         # Send button
@@ -199,6 +200,8 @@ class App:
         # Container that holds a list of message elements
         self.messages_container = ScrolledFrame(self.root, width=600,
                                                 height=600, autohide=True, padding=10)
+
+        self.greeting_message = tk.Label(self.messages_container, text="Choose a user to start talking")
 
         self.previous_button_element = None
 
@@ -226,6 +229,7 @@ class App:
         # Highlight the current recipient
         if self.previous_button_element != None:
             self.previous_button_element.configure(bootstyle="light")
+            self.greeting_message.destroy()
         self.previous_button_element = button
         button.configure(bootstyle="primary")
 
@@ -263,6 +267,7 @@ class App:
 
         self.prompt_container.pack(side=BOTTOM, fill=X)
 
+        self.greeting_message.pack()
         self.messages_container.pack(side=RIGHT)
 
         # Receive messages on a separate thread
