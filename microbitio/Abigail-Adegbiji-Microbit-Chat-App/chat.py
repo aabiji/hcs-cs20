@@ -1,3 +1,12 @@
+"""
+Author: Abigail Adegbiji
+Date: June 14, 2024
+
+A chat app that uses the microbit radio functionality to send and receive messages.
+The messages that are sent and received are processed using a substitution cipher.
+The app's gui is made using python's builtin tkinter library and ttkbootstrap on top to make it look nice.
+"""
+
 import microbit
 import threading
 import tkinter as tk
@@ -6,8 +15,7 @@ from ttkbootstrap.constants import *
 from ttkbootstrap.scrolled import ScrolledFrame
 import re
 
-microbit.radio.on()
-
+""" ================================ Encryption/Decryption ================================== """
 # Get the offset from the letter 'a' to the character, where 'a' is 0
 def get_offset(character):
     ascii_index = ord(character)
@@ -20,7 +28,7 @@ def get_offset(character):
     if ascii_index >= 65 and ascii_index <= 90:
         return ascii_index - 38
 
-    # Every other ascii character, 54 - 86
+    # Everything else
     offsets = { ' ': 54, '!': 55, '@' : 56, '#': 57, '$': 58, '%': 59, '^': 60,
                 '&': 61, '*': 62, '(' : 63, ')': 64, '-': 65, '+': 66, '_': 67,
                 '=': 68, '{': 69, '}' : 70, '[': 71, ']': 72, ':': 73, ';': 74,
@@ -32,12 +40,15 @@ def get_offset(character):
 
 # Get the character from the offset going from 0 to 86
 def get_character(offset):
+    # Letters 'a' to 'z', 0 - 26
     if offset <= 26:
         return chr(offset + 97)
 
+    # Letters 'A' to 'Z', 27 - 53
     if offset >= 27 and offset <= 53:
         return chr(offset + 38)
 
+    # Everything else
     characters = { 54: ' ', 55: '!', 56: '@',  57: '#', 58: '$', 59: '%', 60: '^',
                    61: '&', 62: '*', 63: '(',  64: ')', 65: '-', 66: '+', 67: '_',
                    68: '=', 69: '{', 70: '}',  71: '[', 72: ']', 73: ':', 74: ';',
@@ -49,9 +60,9 @@ def get_character(offset):
 
 # Encrypt or decrypt a message based on an encryption key
 def process(msg, key, encrypt):
-    max_offset = 87
+    max_offset = 96
     key_index = 0
-    new_msg = ""
+    processed_msg = ""
 
     for character in msg:
         key_offset = get_offset(key[key_index])
@@ -72,25 +83,27 @@ def process(msg, key, encrypt):
 
         # Make the shifted character within the range of 0 to 86
         shifted_char %= max_offset
-        new_msg += get_character(shifted_char)
+        processed_msg += get_character(shifted_char)
 
-    return new_msg
+    return processed_msg
 
+""" ================================ Messaging ================================== """
 class Message:
     def __init__(self, sent_by_user, text):
-        self.text = text
-        # Did we send the message?
-        self.sent_by_user = sent_by_user
+        self.text = text # Decrypted message text
+        self.sent_by_user = sent_by_user # Equals True if we sent the message
 
 class Connection:
     def __init__(self):
-        self.channel = -1
-        # List of messages sent between the you and the recipient
-        self.messages = []
+        self.channel = -1  # Channel used to communicate
+        self.messages = [] # List of messages sent between you and the recipient
 
 class Messager:
     def __init__(self):
-        # Map user ids to connections
+        # Map user ids to connections:
+        # By indexing into a connection using the recipient's user id we can
+        # get the channel used to communicate with them and a list of messages
+        # sent between you and them
         self.connections = {}
 
         # 75 bit encryption key
@@ -103,15 +116,14 @@ class Messager:
         self.current_channel = 0
 
         self.load_user_base()
+        microbit.radio.on()
 
-    # Return a hashmap that maps all the users on the GNS
-    # to chat data
+    # Return a hashmap that maps all the users on the GNS to connection data
     def load_user_base(self):
         with open("users.txt", "r") as file:
             for line in file.read().split("\n"):
                 self.connections[line] = Connection()
 
-    # TODO: spawn thread for this
     # Find the channel and group the user is on
     # Return -1 to signal an error
     def find_user_channel(self, user):
@@ -129,13 +141,16 @@ class Messager:
                     return int(channel)
             microbit.sleep(200)
 
+    # Connect to the user, return -1 on error
     def connect_to_user(self, user):
         self.current_recipient = user
 
         # Only do user lookup if the user's channel isn't already cached
         if user not in self.connections or self.connections[user].channel == -1:
-            self.connections[user].channel = self.find_user_channel(user)
-            # TODO: show error if channel == -1
+            found = self.find_user_channel(user)
+            if found == -1:
+                return -1
+            self.connections[user].channel = found
 
         # The channel we'll connect to needs to be the bigger one
         channel = self.connections[user].channel
@@ -175,23 +190,24 @@ class Messager:
     def get_current_messages(self):
         return self.connections[self.current_recipient].messages
 
+""" ================================ GUI ================================== """
 class App:
     def __init__(self, sender):
         self.messanger = Messager()
         self.messanger.connect_to_user(sender)
 
         self.root = ttk.Window(size=(600, 600), resizable=(False, False))
-        self.root.title(f"MicroChat {sender}")
+        self.root.title(f"Microbit Chat {sender}")
+        self.root.protocol("WM_DELETE_WINDOW", self.close)
 
         # Sidebar of users
         self.users_list_container = ScrolledFrame(self.root, width=200, autohide=True)
 
         # Input box for typing in message
         self.prompt_container = ttk.Frame(self.root, width=400, height=40, padding=0)
-
         self.text_input = tk.StringVar(self.root)
         self.message_prompt = ttk.Entry(self.prompt_container,
-                                        width=50,
+                                        width=56,
                                         textvariable=self.text_input)
 
         # Send button
@@ -201,9 +217,11 @@ class App:
         self.messages_container = ScrolledFrame(self.root, width=600,
                                                 height=600, autohide=True, padding=10)
 
-        self.greeting_message = tk.Label(self.messages_container, text="Choose a user to start talking")
+        # Message shown when you haven't connected to a recipient yet
+        self.greeting_message = ttk.Label(self.messages_container, text="Choose a user to start talking", bootstyle="primary")
 
         self.previous_button_element = None
+        self.stop_receiving = False
 
     def add_message_element(self, text, sent_by_user):
         # Messages sent by us are grey, messages sent by the recipient are blue
@@ -216,17 +234,22 @@ class App:
         label.pack(anchor=align_direction, padx=10, pady=10)
 
     def change_recipient(self, user, button):
-        self.messanger.connect_to_user(user)
-
-        # Clear the container and repopulate the messages container with
-        # messages between the sernder and recipient
+        # Clear the message container
         for child in self.messages_container.winfo_children():
             child.destroy()
 
+        # Show an error message when the user we're connecting to isn't found
+        result = self.messanger.connect_to_user(user)
+        if result == -1:
+            ttk.Label(self.messages_container, text="User not found.", bootstyle="danger").pack()
+            return
+
+        # Repopulate the messages container with
+        # messages between the sender and recipient
         for msg in self.messanger.get_current_messages():
             self.add_message_element(msg.text, msg.sent_by_user)
 
-        # Highlight the current recipient
+        # Highlight the current recipient and remove the placeholder message
         if self.previous_button_element != None:
             self.previous_button_element.configure(bootstyle="light")
             self.greeting_message.destroy()
@@ -234,6 +257,10 @@ class App:
         button.configure(bootstyle="primary")
 
     def send_message(self, _events):
+        # You can't send an empty message
+        if self.text_input.get() == "":
+            return
+
         self.messanger.send_message(self.text_input.get())
         self.add_message(self.text_input.get(), True)
 
@@ -245,13 +272,16 @@ class App:
 
     def receive_messages(self):
         while True:
+            if self.stop_receiving:
+                break
+
             msg = self.messanger.receive_message()
             if msg != None:
                 self.add_message(msg.text, False)
             microbit.sleep(1000)
 
     def run(self):
-        # Populate the side bar with all the users on the gns
+        # Populate the sidebar with all the users on the gns
         self.users_list_container.pack(side=LEFT, fill=BOTH, expand=NO)
         for user in self.messanger.connections:
             button = ttk.Button(self.users_list_container, text=user, bootstyle="light", width=150)
@@ -277,6 +307,10 @@ class App:
         self.root.mainloop()
         thread.join()
 
-user = input("Who are you?")
-app = App(user)
+    def close(self):
+        self.stop_receiving = True # Stop the receiving thread
+        self.root.destroy() # Close the window
+
+me = "abigail.adegbiji"
+app = App(me)
 app.run()
