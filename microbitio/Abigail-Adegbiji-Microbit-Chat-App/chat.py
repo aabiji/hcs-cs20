@@ -192,12 +192,10 @@ class Messager:
 
 """ ================================ GUI ================================== """
 class App:
-    def __init__(self, sender):
+    def __init__(self):
         self.messanger = Messager()
-        self.messanger.connect_to_user(sender)
 
         self.root = ttk.Window(size=(600, 600), resizable=(False, False))
-        self.root.title(f"Microbit Chat {sender}")
         self.root.protocol("WM_DELETE_WINDOW", self.close)
 
         # Sidebar of users
@@ -257,8 +255,8 @@ class App:
         button.configure(bootstyle="primary")
 
     def send_message(self, _events):
-        # You can't send an empty message
-        if self.text_input.get() == "":
+        # You can't send an empty message or talk to nobody
+        if self.text_input.get() == "" or self.messanger.current_recipient == "":
             return
 
         self.messanger.send_message(self.text_input.get())
@@ -311,6 +309,5 @@ class App:
         self.stop_receiving = True # Stop the receiving thread
         self.root.destroy() # Close the window
 
-me = "abigail.adegbiji"
-app = App(me)
-app.run()
+if __name__ == "__main__":
+    App().run()
