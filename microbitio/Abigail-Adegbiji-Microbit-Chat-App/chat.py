@@ -1,6 +1,6 @@
 """
 Author: Abigail Adegbiji
-Date: June 14, 2024
+Date: June 17, 2024
 
 A chat app that uses the microbit radio functionality to send and receive messages.
 The messages that are sent and received are processed using a substitution cipher.
@@ -81,7 +81,7 @@ def process(msg, key, encrypt):
         if encrypt == False:
             shifted_char = char_offset - key_offset
 
-        # Make the shifted character within the range of 0 to 86
+        # Make the shifted character within the range of 0 to max_offset
         shifted_char %= max_offset
         processed_msg += get_character(shifted_char)
 
@@ -99,7 +99,9 @@ class Connection:
         self.messages = [] # List of messages sent between you and the recipient
 
 class Messager:
-    def __init__(self):
+    def __init__(self, sender):
+        microbit.radio.on()
+
         # Map user ids to connections:
         # By indexing into a connection using the recipient's user id we can
         # get the channel used to communicate with them and a list of messages
@@ -113,10 +115,9 @@ class Messager:
         self.current_recipient = ""
 
         # Current channel we're using to communicate
-        self.current_channel = 0
+        self.current_channel = self.find_user_channel(sender)
 
         self.load_user_base()
-        microbit.radio.on()
 
     # Return a hashmap that maps all the users on the GNS to connection data
     def load_user_base(self):
@@ -192,8 +193,8 @@ class Messager:
 
 """ ================================ GUI ================================== """
 class App:
-    def __init__(self):
-        self.messanger = Messager()
+    def __init__(self, sender):
+        self.messanger = Messager(sender)
 
         self.root = ttk.Window(size=(600, 600), resizable=(False, False))
         self.root.protocol("WM_DELETE_WINDOW", self.close)
@@ -236,8 +237,13 @@ class App:
         for child in self.messages_container.winfo_children():
             child.destroy()
 
+        # Show a message while we search for the recipient
+        loading_message = ttk.Label(self.messages_container, text="Connecting...", bootstyle="primary")
+        loading_message.pack()
+
         # Show an error message when the user we're connecting to isn't found
         result = self.messanger.connect_to_user(user)
+        loading_message.destry()
         if result == -1:
             ttk.Label(self.messages_container, text="User not found.", bootstyle="danger").pack()
             return
@@ -310,4 +316,4 @@ class App:
         self.root.destroy() # Close the window
 
 if __name__ == "__main__":
-    App().run()
+    App("abigail.adegbiji").run()
