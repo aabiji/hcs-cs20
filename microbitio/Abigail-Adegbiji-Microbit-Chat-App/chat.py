@@ -243,7 +243,7 @@ class App:
 
         # Show an error message when the user we're connecting to isn't found
         result = self.messanger.connect_to_user(user)
-        loading_message.destry()
+        loading_message.destroy()
         if result == -1:
             ttk.Label(self.messages_container, text="User not found.", bootstyle="danger").pack()
             return
